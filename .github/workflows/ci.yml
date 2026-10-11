@@ -13,5 +13,12 @@ jobs:
       - run: bunx tsc --noEmit
       - run: bun test
       - name: Validate skill
-        run: python3 -c "import re,sys;s=open('skill/butex-notebot/SKILL.md').read();assert s.startswith('---\nname: butex-notebot'),'frontmatter';assert re.search(r'butex-notebot skill version:\s*\d+\.\d+\.\d+',s),'version marker'"
+        run: |
+          python3 - <<'PY'
+          import re
+          s = open("skill/butex-notebot/SKILL.md").read()
+          assert s.startswith("---
+name: butex-notebot"), "frontmatter"
+          assert re.search(r"butex-notebot skill version:\s*\d+\.\d+\.\d+", s), "version marker"
+          PY
       - run: python3 -m py_compile skill/butex-notebot/scripts/check_update.py
