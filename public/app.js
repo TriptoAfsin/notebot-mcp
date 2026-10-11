@@ -106,10 +106,17 @@
     }
     setLoading(btn, true);
     try {
-      const { key } = await post("/api/keys", { email: email.value.trim() });
+      const res = await post("/api/keys", { email: email.value.trim() });
+      form.hidden = true;
+      if (res.status === "emailed") {
+        // existing address: the key goes to the inbox, never to the screen
+        $("[data-key-emailed-text]").textContent = res.message;
+        $("[data-key-emailed]").hidden = false;
+        return;
+      }
+      const key = res.key;
       $("#new-key").textContent = key;
       $("[data-key-reveal]").hidden = false;
-      form.hidden = true;
       fillKey(key);
       try { sessionStorage.setItem("nb-key", key); } catch {}
       $("#mkey").value = key;

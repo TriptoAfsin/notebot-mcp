@@ -1,5 +1,7 @@
 # BUTEX NoteBot tool reference
 
+**Part 1: `butex` server (official notices).** Part 2 covers the `notebot` library.
+
 All tools are read-only. Every listing line reads:
 `- [YYYY-MM-DD] Title` / `id N · Categories · K images/pdfs` / `URL`.
 
@@ -50,3 +52,47 @@ ChatGPT-compatible pair: `search(query)` returns JSON `{results:[{id,title,url}]
 - Department short names on the site: DYE (yarn), DFE (fabric), DWPE (wet process),
   DAE (apparel), DTFD (fashion & design), DTEM (management), DTMDM (machinery),
   DIPE (industrial & production), DCE (dyes & chemical), DESE (environmental).
+
+---
+
+# Part 2: `notebot` server (NoteBot study library)
+
+All arguments that take `level` accept 1–4, "L2" or "Level 2". Subjects accept names or codes
+("Math-I" = "math1", "Yarn Manufacturing I" = "ym1"); a miss returns the valid list.
+
+## notebot_search
+- `query` (2–120 chars), `limit` 1–20. Searches note and lab-report titles plus topic/subject names. Every term must match.
+
+## notebot_browse
+- `level` (optional). Without it: every level's note and lab subjects. With it: subjects, lab subjects, question-bank count.
+
+## notebot_subject
+- `level`, `subject`. Every topic with Drive links. Typical topics: chapter notes, Books, Hand Notes, Questions, Suggestions, and named contributors' notes ("Part-A(Kakon,2025)").
+
+## notebot_lab_reports
+- `level`, `subject` (optional). Without subject, lists lab subjects (codes like `phy_1`, `fm_1`).
+
+## notebot_question_banks
+- `level`, `subject` (optional filter on title).
+
+## notebot_routines
+- `level`, `department` (YE, FE, WPE, AE, TFD, TEM, TMDM, IPE, DCE, ESE…), `term` ("1"/"2"). An archive of routine files; the newest official ones come from `butex_schedules`.
+
+## notebot_syllabus
+- `batch` (optional). Without it, lists batches.
+
+## notebot_results_archive
+- `query` (optional). Older result sheets saved in NoteBot. New results come from `butex_results`.
+
+## notebot_ask
+- `question`. TexGPT answer grounded in NoteBot's books and notes, plus source filenames. Takes 5–30 s.
+
+## notebot_study_plan
+- `level`, `subjects[]` (optional, max 8), `goal` (final_exam | class_test | semester | lab_viva | revision), `days_left`, `hours_per_day`.
+- Returns a study kit (chapters, books, previous questions per subject, question banks, popularity rank) plus planning guidance. You write the plan.
+
+## notebot_recommend
+- `level` (optional). Most-opened subjects and labs across NoteBot, mapped to levels.
+
+## Prompts
+`study-plan` (level, subjects, days) and `exam-sprint` (level, subject) for clients that support MCP prompts.

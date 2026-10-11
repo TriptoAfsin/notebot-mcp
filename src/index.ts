@@ -1,18 +1,22 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { join } from "node:path";
+import { startUsageReporter } from "./analytics/usage";
 import { getCorpus } from "./butex/client";
 import { registerButexTools, startButexWarmer } from "./butex/tools";
 import { env } from "./env";
 import { cache } from "./lib/cache";
-import { dbStatus, warmDb } from "./lib/db";
-import { issueKey, keyUsage, revokeKey } from "./lib/keys";
+import { safeEqual } from "./lib/crypto";
+import { db, dbStatus, warmDb } from "./lib/db";
+import { keyUsage, readRotateToken, readUnsubscribeToken, requestKey, revokeKey, rotateKeys, unsubscribe } from "./lib/keys";
+import { mailConfigured } from "./lib/mail";
 import { breakerStatus } from "./lib/resilient";
 import { clientIp, errMsg, json } from "./lib/util";
 import { BUTEX_INSTRUCTIONS, handleMcp } from "./mcp/handler";
+import { NOTEBOT_INSTRUCTIONS, registerNotebotTools } from "./notebot/tools";
 import { authorizeGet, authorizePost, authServerMetadata, protectedResourceMetadata, register, token } from "./oauth/oauth";
 import { SKILL_VERSION, skillRoute } from "./skill";
 import { VERSION } from "./version";
-import { dashboardPage, type ToolDoc } from "./web/pages";
+import { dashboardPage, messagePage, type ToolDoc } from "./web/dashboard";
 
 const PUBLIC_DIR = join(import.meta.dir, "..", "public");
 const STATIC = new Set(["/app.css", "/app.js", "/icon.png", "/favicon.ico", "/apple-touch-icon.png"]);
@@ -33,21 +37,34 @@ function withCors(res: Response): Response {
 }
 
 /** Tool docs for the dashboard come from the real registrations, so the page can't drift from the server. */
-function toolDocs(): ToolDoc[] {
+function toolDocs(register: (s: McpServer) => void, extra: ToolDoc[] = []): ToolDoc[] {
   try {
     const s = new McpServer({ name: "introspect", version: VERSION });
-    registerButexTools(s);
+    register(s);
     const reg = (s as unknown as { _registeredTools: Record<string, { title?: string; description?: string }> })._registeredTools;
     return Object.entries(reg)
       .filter(([name]) => name !== "search" && name !== "fetch")
       .map(([name, t]) => ({ name, title: t.title ?? name, description: t.description ?? "" }))
-      .concat([{ name: "search · fetch", title: "ChatGPT pair", description: "The search/fetch pair ChatGPT connectors and deep research look for, over the same notices." }]);
+      .concat(extra);
   } catch {
-    return [];
+    return extra;
   }
 }
 
-const dashboardData = { tools: toolDocs(), guidelines: BUTEX_INSTRUCTIONS, skillVersion: SKILL_VERSION };
+const dashboardData = {
+  servers: [
+    {
+      id: "butex",
+      name: "BUTEX notices",
+      tools: toolDocs(registerButexTools, [
+        { name: "search · fetch", title: "ChatGPT pair", description: "The search/fetch pair ChatGPT connectors and deep research look for, over the same notices." },
+      ]),
+      guidelines: BUTEX_INSTRUCTIONS,
+    },
+    { id: "notebot", name: "NoteBot study library", tools: toolDocs(registerNotebotTools), guidelines: NOTEBOT_INSTRUCTIONS },
+  ],
+  skillVersion: SKILL_VERSION,
+};
 
 async function readJson<T>(req: Request): Promise<Partial<T>> {
   try {
@@ -56,6 +73,16 @@ async function readJson<T>(req: Request): Promise<Partial<T>> {
     return {};
   }
 }
+
+function isAdmin(req: Request): boolean {
+  const given = req.headers.get("x-admin-key") ?? "";
+  return !!env.adminKey && !!given && safeEqual(given, env.adminKey);
+}
+
+const csvCell = (v: unknown) => {
+  const s = Array.isArray(v) ? v.join(";") : v instanceof Date ? v.toISOString() : String(v ?? "");
+  return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+};
 
 async function route(req: Request, server: Bun.Server<undefined>): Promise<Response> {
   const url = new URL(req.url);
@@ -67,11 +94,12 @@ async function route(req: Request, server: Bun.Server<undefined>): Promise<Respo
 
   // MCP endpoints
   if (path === "/butex/mcp" || path === "/mcp") return withCors(await handleMcp(req, "butex"));
+  if (path === "/notebot/mcp") return withCors(await handleMcp(req, "notebot"));
   if (path === "/analytics/mcp") return withCors(await handleMcp(req, "analytics"));
 
   // OAuth discovery (RFC 9728 / RFC 8414). Clients probe several spellings, so be generous.
   if (path.startsWith("/.well-known/oauth-protected-resource")) {
-    return withCors(protectedResourceMetadata(path.includes("analytics") ? "analytics" : "butex"));
+    return withCors(protectedResourceMetadata(path.includes("analytics") ? "analytics" : path.includes("notebot") ? "notebot" : "butex"));
   }
   if (path.startsWith("/.well-known/oauth-authorization-server") || path.startsWith("/.well-known/openid-configuration")) {
     return withCors(authServerMetadata());
@@ -83,8 +111,11 @@ async function route(req: Request, server: Bun.Server<undefined>): Promise<Respo
   // Dashboard API
   if (path === "/api/keys" && method === "POST") {
     const { email } = await readJson<{ email: string }>(req);
-    const r = await issueKey({ email: String(email ?? ""), tier: "free", ip, source: "dashboard" });
-    return r.ok ? json({ key: r.key, id: r.id, endpoint: `${env.publicUrl}/butex/mcp` }, { status: 201 }) : json({ error: r.error }, { status: r.status });
+    const r = await requestKey({ email: String(email ?? ""), ip });
+    if (!r.ok) return json({ error: r.error }, { status: r.status });
+    return r.kind === "created"
+      ? json({ status: "created", key: r.key, id: r.id, endpoints: [`${env.publicUrl}/butex/mcp`, `${env.publicUrl}/notebot/mcp`] }, { status: 201 })
+      : json({ status: "emailed", message: `This address already has a key. We've emailed it to ${r.email}. Check spam if it isn't there in a minute.` });
   }
   if (path === "/api/keys/usage" && method === "POST") {
     const { key } = await readJson<{ key: string }>(req);
@@ -106,9 +137,54 @@ async function route(req: Request, server: Bun.Server<undefined>): Promise<Respo
     );
   }
 
+  // Emailed links. GET only renders a confirm button: link scanners in mail clients
+  // pre-fetch URLs, and a GET that acted would burn the link before the owner clicks.
+  if (path === "/keys/rotate") {
+    const t = method === "POST" ? new URLSearchParams(await req.text()).get("t") ?? "" : url.searchParams.get("t") ?? "";
+    if (method === "POST") {
+      const r = await rotateKeys(t, ip);
+      return r.ok
+        ? messagePage({ title: "Here's your new key", body: `Your old key for ${r.email} is revoked. This is the only time the new one is shown, so copy it now. It works on both servers.`, key: r.key })
+        : messagePage({ title: "Couldn't replace the key", body: r.error }, 400);
+    }
+    const email = readRotateToken(t);
+    return email
+      ? messagePage({ title: "Replace your key?", body: `This revokes every dashboard key for ${email} and shows a new one. Apps using the old key stop working until you paste the new one.`, form: { action: "/keys/rotate", t, label: "Revoke and create a new key" } })
+      : messagePage({ title: "Link expired", body: "This link is no longer valid. Request your key again from the dashboard to get a fresh link." }, 400);
+  }
+  if (path === "/unsubscribe") {
+    const t = method === "POST" ? new URLSearchParams(await req.text()).get("t") ?? "" : url.searchParams.get("t") ?? "";
+    const email = readUnsubscribeToken(t);
+    if (!email) return messagePage({ title: "Link not valid", body: "This unsubscribe link isn't valid." }, 400);
+    if (method === "POST") {
+      const ok = await unsubscribe(email);
+      return messagePage({ title: ok ? "You're unsubscribed" : "Try again later", body: ok ? `${email} won't get NoteBot update emails. Your key keeps working, and key-recovery emails still go out when you ask for them.` : "The database is unreachable right now." });
+    }
+    return messagePage({ title: "Unsubscribe?", body: `Stop NoteBot update emails to ${email}.`, form: { action: "/unsubscribe", t, label: "Unsubscribe" } });
+  }
+
+  // Owner-only export of everyone who asked for a key
+  if (path === "/api/admin/contacts.csv") {
+    if (!isAdmin(req)) return json({ error: "Admin key required (X-Admin-Key)." }, { status: 401 });
+    const rows = (await db((sql) => sql`SELECT email, first_seen, last_seen, sources, key_requests, recovery_emails, unsubscribed_at FROM mcp.contacts ORDER BY first_seen`, 15_000)) as Record<string, unknown>[] | null;
+    if (!rows) return json({ error: "database unavailable" }, { status: 503 });
+    const cols = ["email", "first_seen", "last_seen", "sources", "key_requests", "recovery_emails", "unsubscribed_at"];
+    const csv = [cols.join(","), ...rows.map((r) => cols.map((c) => csvCell(r[c])).join(","))].join("\n");
+    return new Response(csv, { headers: { "content-type": "text/csv; charset=utf-8", "content-disposition": 'attachment; filename="notebot-mcp-contacts.csv"', "cache-control": "no-store" } });
+  }
+
   if (path === "/health") {
     const [c, d] = await Promise.all([cache.status(), dbStatus()]);
-    return json({ ok: true, version: VERSION, skill: SKILL_VERSION, butex: breakerStatus("butex.edu.bd"), cache: c, database: d });
+    return json({
+      ok: true,
+      version: VERSION,
+      skill: SKILL_VERSION,
+      butex: breakerStatus("butex.edu.bd"),
+      engine: breakerStatus("notebot-engine"),
+      cache: c,
+      database: d,
+      email: mailConfigured() ? "configured" : "not configured",
+    });
   }
 
   if (path.startsWith("/skill/")) {
@@ -117,10 +193,10 @@ async function route(req: Request, server: Bun.Server<undefined>): Promise<Respo
   }
 
   if (path === "/" && method === "GET") return dashboardPage(dashboardData);
-  if (path === "/robots.txt") return new Response("User-agent: *\nAllow: /\nDisallow: /oauth/\nDisallow: /api/\n");
+  if (path === "/robots.txt") return new Response("User-agent: *\nAllow: /\nDisallow: /oauth/\nDisallow: /api/\nDisallow: /keys/\n");
   if (path === "/llms.txt") {
     return new Response(
-      `# NoteBot MCP\n\nMCP server for official BUTEX (Bangladesh University of Textiles) notices.\n\n- MCP endpoint: ${env.publicUrl}/butex/mcp (Streamable HTTP; OAuth or Bearer key)\n- Free key: ${env.publicUrl}/#get-key\n- Agent skill: ${env.publicUrl}/skill/SKILL.md\n\n${BUTEX_INSTRUCTIONS}\n`,
+      `# NoteBot MCP\n\nMCP servers for BUTEX (Bangladesh University of Textiles) students.\n\n- BUTEX notices: ${env.publicUrl}/butex/mcp\n- NoteBot study library: ${env.publicUrl}/notebot/mcp\n- Streamable HTTP; OAuth or Bearer key. Free key: ${env.publicUrl}/#get-key\n- Agent skill: ${env.publicUrl}/skill/SKILL.md\n\n## BUTEX notices\n${BUTEX_INSTRUCTIONS}\n\n## NoteBot library\n${NOTEBOT_INSTRUCTIONS}\n`,
       { headers: { "content-type": "text/plain; charset=utf-8" } },
     );
   }
@@ -139,7 +215,7 @@ async function route(req: Request, server: Bun.Server<undefined>): Promise<Respo
 const server = Bun.serve({
   port: env.port,
   hostname: "0.0.0.0",
-  idleTimeout: 120, // notice reads can download a PDF + scans
+  idleTimeout: 120, // notice reads can download a PDF + scans; TexGPT can take ~30s
   maxRequestBodySize: 1024 * 1024,
   async fetch(req, srv) {
     try {
@@ -160,4 +236,5 @@ process.on("uncaughtException", (e) => console.error("uncaughtException:", e));
 
 warmDb();
 startButexWarmer();
+startUsageReporter();
 console.log(`🟢 NoteBot MCP v${VERSION} on :${server.port} (public ${env.publicUrl})`);

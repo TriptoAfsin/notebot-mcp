@@ -1,6 +1,8 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { env } from "../env";
+import { db } from "../lib/db";
+import { pendingAiUsage } from "./usage";
 import { breakerStatus, cachedFetch, fetchJson } from "../lib/resilient";
 import { clamp } from "../lib/util";
 import { guard, READ_ONLY, text, todayDhaka } from "../mcp/tooling";
@@ -163,6 +165,37 @@ export function registerAnalyticsTools(server: McpServer) {
       if (email) return out(`Error logs for ${email}`, await post("/logs/err/email", { email }));
       if (!env.analyticsAdminKey) throw new Error("ANALYTICS_ADMIN_KEY is not configured on the MCP server");
       return out("Error logs", await get("/logs/err", {}, true, 60));
+    }),
+  );
+
+  server.registerTool(
+    "mcp_signups",
+    {
+      title: "MCP sign-ups",
+      description: "People who requested NoteBot MCP keys (stored for outreach): totals, sign-ups per day, how they connected, and the most recent addresses. Excludes unsubscribed addresses unless include_unsubscribed is true.",
+      inputSchema: { recent: z.number().int().min(0).max(500).optional().describe("How many recent emails to list (default 25)."), include_unsubscribed: z.boolean().optional() },
+      annotations: { title: "MCP sign-ups", ...READ_ONLY },
+    },
+    guard("mcp_signups", async ({ recent, include_unsubscribed }) => {
+      const n = clamp(recent, 0, 500, 25);
+      const r = await db(async (sql) => {
+        const [totals] = await sql`SELECT count(*)::int AS contacts,
+                                          count(*) FILTER (WHERE unsubscribed_at IS NULL)::int AS reachable,
+                                          (SELECT count(*)::int FROM mcp.api_keys WHERE revoked_at IS NULL AND tier = 'free') AS active_keys
+                                   FROM mcp.contacts`;
+        const perDay = await sql`SELECT to_char(first_seen::date, 'YYYY-MM-DD') AS day, count(*)::int AS n
+                                 FROM mcp.contacts WHERE first_seen > now() - interval '30 days' GROUP BY 1 ORDER BY 1 DESC`;
+        const bySource = await sql`SELECT s AS source, count(*)::int AS n FROM mcp.contacts, unnest(sources) s GROUP BY 1 ORDER BY 2 DESC LIMIT 15`;
+        const latest = await sql`SELECT email, to_char(first_seen, 'YYYY-MM-DD HH24:MI') AS first_seen, key_requests, sources
+                                 FROM mcp.contacts WHERE ${include_unsubscribed ? sql`true` : sql`unsubscribed_at IS NULL`}
+                                 ORDER BY first_seen DESC LIMIT ${n}`;
+        return { totals, perDay, bySource, latest };
+      }, 8000);
+      if (!r) throw new Error("the key database is unreachable");
+      return text(`MCP sign-ups — today ${todayDhaka()} · AI calls waiting to be reported: ${pendingAiUsage()}
+CSV export: ${env.publicUrl}/api/admin/contacts.csv (send X-Admin-Key)
+
+${JSON.stringify(r, null, 2)}`);
     }),
   );
 

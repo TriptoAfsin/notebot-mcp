@@ -45,12 +45,18 @@ check("health", health.ok === true, `db=${health.database} redis=${health.cache?
 const page = await fetch(BASE + "/");
 check("dashboard renders", page.ok && (await page.text()).includes("Get a free key"));
 
+// Resend sink addresses only: nothing reaches a real inbox
+const EMAIL = `delivered+smoke${Date.now()}@resend.dev`;
+
 // ── key issuance
 const bad = await fetch(`${BASE}/api/keys`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ email: "nope" }) });
 check("rejects invalid email", bad.status === 400);
-const issued = await fetch(`${BASE}/api/keys`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ email: "smoke@example.com" }) }).then(j);
+const issued = await fetch(`${BASE}/api/keys`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ email: EMAIL }) }).then(j);
 const key: string = issued.key;
-check("issues key", /^nbk_f_/.test(key ?? ""), key?.slice(0, 12));
+check("issues key for a new address", issued.status === "created" && /^nbk_f_/.test(key ?? ""), key?.slice(0, 12));
+const again = await fetch(`${BASE}/api/keys`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ email: EMAIL.toUpperCase() }) });
+const againBody = await j(again);
+check("same address → key emailed, never shown", !("key" in againBody) && (againBody.status === "emailed" || again.status === 503), againBody.status ?? againBody.error);
 
 // ── MCP auth
 const noKey = await rpc("/butex/mcp", null, "tools/list");
@@ -97,6 +103,30 @@ if (parsed.results?.[0]) {
   const f = JSON.parse(toolText(await callTool(key, "fetch", { id: parsed.results[0].id })) || "{}");
   check("fetch (ChatGPT)", !!f.id && !!f.text && !!f.url, f.title?.slice(0, 60));
 }
+// ── NoteBot library server (same key)
+const nbList = await rpc("/notebot/mcp", key, "tools/list");
+const nbNames: string[] = nbList.body?.result?.tools?.map((t: any) => t.name) ?? [];
+check("notebot tools/list (same key)", nbNames.includes("notebot_study_plan") && nbNames.includes("notebot_ask"), `${nbNames.length} tools`);
+for (const [name, args] of [
+  ["notebot_search", { query: "chemistry" }],
+  ["notebot_browse", { level: 1 }],
+  ["notebot_subject", { level: 1, subject: "math1" }],
+  ["notebot_lab_reports", { level: 1, subject: "phy_1" }],
+  ["notebot_question_banks", { level: 2 }],
+  ["notebot_routines", { level: 1 }],
+  ["notebot_syllabus", {}],
+  ["notebot_results_archive", { query: "2019" }],
+  ["notebot_study_plan", { level: 1, subjects: ["Math-I"], days_left: 5 }],
+  ["notebot_recommend", {}],
+  ["notebot_status", {}],
+] as const) {
+  const r = await callTool(key, name, args as Record<string, unknown>, "/notebot/mcp");
+  const t = toolText(r);
+  check(`${name} ${JSON.stringify(args)}`, !r.body?.result?.isError && t.length > 20, t.split("\n").find((l: string) => /https?:\/\//.test(l))?.trim().slice(0, 80) ?? t.slice(0, 80));
+}
+const prompts = await rpc("/notebot/mcp", key, "prompts/list");
+check("notebot prompts", (prompts.body?.result?.prompts?.length ?? 0) >= 2);
+
 const badArgs = await callTool(key, "butex_read_notice", { notice: "999999999" });
 check("bad id → graceful isError", badArgs.body?.result?.isError === true || !!badArgs.body?.error);
 
@@ -133,7 +163,7 @@ const approve = await fetch(asm.authorization_endpoint, {
   method: "POST",
   redirect: "manual",
   headers: { "content-type": "application/x-www-form-urlencoded" },
-  body: new URLSearchParams({ ...Object.fromEntries(params), email: "oauth@example.com", action: "allow" }),
+  body: new URLSearchParams({ ...Object.fromEntries(params), email: `delivered+oauth${Date.now()}@resend.dev`, action: "allow" }),
 });
 const loc = new URL(approve.headers.get("location") ?? "http://x");
 const code = loc.searchParams.get("code");
@@ -149,6 +179,9 @@ const viaOauth = await rpc("/butex/mcp", tokenRes.access_token, "tools/list");
 check("OAuth token works on MCP", viaOauth.status === 200);
 const refreshed = await fetch(asm.token_endpoint, { method: "POST", headers: { "content-type": "application/x-www-form-urlencoded" }, body: new URLSearchParams({ grant_type: "refresh_token", refresh_token: tokenRes.refresh_token }) }).then(j);
 check("refresh grant", refreshed.access_token === tokenRes.access_token);
+const nbPrm = await fetch(`${BASE}/.well-known/oauth-protected-resource/notebot/mcp`).then(j);
+check("notebot protected resource metadata", nbPrm.resource === `${BASE}/notebot/mcp`);
+check("OAuth token works on notebot too", (await rpc("/notebot/mcp", tokenRes.access_token, "tools/list")).status === 200);
 
 // ── skill
 const ver = await fetch(`${BASE}/skill/version.json`).then(j);

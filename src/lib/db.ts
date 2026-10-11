@@ -27,6 +27,22 @@ CREATE TABLE IF NOT EXISTS mcp.api_keys (
   revoked_at    timestamptz
 );
 CREATE INDEX IF NOT EXISTS api_keys_email_idx ON mcp.api_keys (lower(email));
+
+-- Everyone who asked for a key, for outreach. Lower-cased; unsubscribe is honoured.
+CREATE TABLE IF NOT EXISTS mcp.contacts (
+  email           text PRIMARY KEY,
+  first_seen      timestamptz NOT NULL DEFAULT now(),
+  last_seen       timestamptz NOT NULL DEFAULT now(),
+  sources         text[] NOT NULL DEFAULT '{}',
+  key_requests    integer NOT NULL DEFAULT 0,
+  recovery_emails integer NOT NULL DEFAULT 0,
+  last_ip         text,
+  unsubscribed_at timestamptz
+);
+INSERT INTO mcp.contacts (email, first_seen, last_seen, sources, key_requests)
+  SELECT lower(email), min(created_at), max(created_at), array_agg(DISTINCT source), count(*)
+  FROM mcp.api_keys WHERE email <> 'admin' GROUP BY lower(email)
+  ON CONFLICT (email) DO NOTHING;
 `;
 
 function init(): Promise<boolean> {

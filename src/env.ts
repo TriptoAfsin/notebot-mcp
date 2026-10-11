@@ -30,6 +30,17 @@ export const env = {
 
   analyticsUrl: (e.ANALYTICS_API_URL ?? "https://analytics-api.butexnotebot.com").replace(/\/+$/, ""),
   analyticsAdminKey: e.ANALYTICS_ADMIN_KEY ?? "",
+  /** Count public MCP tool calls as platform "ai" in NoteBot analytics (needs ANALYTICS_ADMIN_KEY). */
+  reportAiUsage: (e.REPORT_AI_USAGE ?? "true") !== "false",
+
+  /** notebot-engine-v2: notes, labs, q-banks, routines, syllabus, TexGPT. */
+  engineUrl: (e.ENGINE_API_URL ?? "https://api.butexnotebot.com").replace(/\/+$/, ""),
+
+  /** Resend, for emailing existing keys back to their owner. Without it, recovery says "try later". */
+  resendKey: e.RESEND_API_KEY ?? "",
+  mailFrom: e.MAIL_FROM ?? (e.RESEND_FROM_EMAIL ? `${e.RESEND_FROM_NAME ?? "NoteBot"} <${e.RESEND_FROM_EMAIL}>` : "NoteBot <notebot@t21.dev>"),
+  mailReplyTo: e.MAIL_REPLY_TO ?? "",
+  recoveryEmailsPerHour: int("RECOVERY_EMAILS_PER_HOUR", 3),
 
   freePerMinute: int("FREE_RATE_PER_MINUTE", 60),
   freePerDay: int("FREE_RATE_PER_DAY", 5000),

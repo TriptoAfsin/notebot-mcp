@@ -1,12 +1,19 @@
 import { env } from "../env";
 import { cache } from "./cache";
-import { hmac, randomId, safeEqual } from "./crypto";
+import { hmac, randomId, safeEqual, seal, sha256b64url, unseal } from "./crypto";
 import { db } from "./db";
+import { layout, mailConfigured, sendMail } from "./mail";
 
 /**
  * API keys are self-verifying: `nbk_<tier>_<id>_<sig>` where sig = HMAC(secret, tier+id).
  * A request is authenticated by checking the signature alone, so auth keeps working
  * when Postgres is down. The database adds revocation, ownership and usage on top.
+ *
+ * Because the signature is deterministic, a key can be rebuilt from its id. That is
+ * how a lost key is recovered: it is re-derived and emailed to the address that
+ * owns it, never shown to whoever typed the address.
+ *
+ * One free key works on every public server (/butex/mcp and /notebot/mcp).
  */
 
 export type Tier = "free" | "admin";
@@ -18,15 +25,22 @@ const KEY_RE = /^nbk_([fa])_([A-Za-z0-9]{16})_([A-Za-z0-9_-]{32})$/;
 
 const sign = (code: string, id: string) => hmac(`${code}.${id}`, "apikey").slice(0, 32);
 
+/** Rebuild the full key for a stored id. Only ever emailed to the key's owner. */
+export function keyFor(id: string, tier: Tier): string {
+  const code = TIER_CODE[tier];
+  return `nbk_${code}_${id}_${sign(code, id)}`;
+}
+
 export function mintKey(tier: Tier): { key: string; id: string } {
   const id = randomId(12).slice(0, 16).padEnd(16, "x");
-  const code = TIER_CODE[tier];
-  return { key: `nbk_${code}_${id}_${sign(code, id)}`, id };
+  return { key: keyFor(id, tier), id };
 }
 
 export function emailIsValid(email: string): boolean {
   return email.length <= 254 && /^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i.test(email);
 }
+
+const normEmail = (e: string) => e.trim().toLowerCase();
 
 /** Pure signature check plus a cached revocation lookup. Never throws. */
 export async function verifyKey(raw: string | null | undefined): Promise<KeyInfo | null> {
@@ -56,32 +70,167 @@ async function isRevoked(id: string): Promise<boolean> {
   return revoked;
 }
 
-export type IssueResult = { ok: true; key: string; id: string } | { ok: false; error: string; status: number };
+/** Every address that asks for a key is kept for outreach (with unsubscribe). Best-effort. */
+export async function recordContact(email: string, source: string, ip: string) {
+  await db(
+    (sql) => sql`
+      INSERT INTO mcp.contacts (email, sources, last_ip, key_requests)
+      VALUES (${email}, ARRAY[${source}]::text[], ${ip}, 1)
+      ON CONFLICT (email) DO UPDATE SET
+        last_seen = now(),
+        last_ip = EXCLUDED.last_ip,
+        key_requests = mcp.contacts.key_requests + 1,
+        sources = (SELECT array_agg(DISTINCT s) FROM unnest(mcp.contacts.sources || EXCLUDED.sources) s)`,
+  );
+}
 
-export async function issueKey(opts: { email: string; tier: Tier; ip: string; source: string; label?: string }): Promise<IssueResult> {
-  const email = opts.email.trim().toLowerCase();
+async function insertKey(id: string, email: string, tier: Tier, source: string, ip: string, label?: string) {
+  return db(
+    (sql) => sql`INSERT INTO mcp.api_keys (id, email, tier, label, source, created_ip)
+                 VALUES (${id}, ${email}, ${tier}, ${label ?? null}, ${source}, ${ip})`,
+  );
+}
+
+const unsubscribeUrl = (email: string) => `${env.publicUrl}/unsubscribe?t=${encodeURIComponent(seal({ e: email, p: "unsub" }))}`;
+const ROTATE_TTL_MS = 60 * 60_000;
+export const rotateUrl = (email: string) =>
+  `${env.publicUrl}/keys/rotate?t=${encodeURIComponent(seal({ e: email, p: "rotate", x: Date.now() + ROTATE_TTL_MS }))}`;
+
+const footer = (email: string) =>
+  `Sent to ${email} because this address was entered at <a href="${env.publicUrl}" style="color:#6b7686">ai.butexnotebot.com</a>. NoteBot is a student project, not an official BUTEX service. <a href="${unsubscribeUrl(email)}" style="color:#6b7686">Unsubscribe from updates</a>.`;
+
+export type KeyRequestResult =
+  | { ok: true; kind: "created"; key: string; id: string }
+  | { ok: true; kind: "emailed"; email: string }
+  | { ok: false; error: string; status: number };
+
+/**
+ * Dashboard flow. A new address gets a key on screen (plus an email copy).
+ * An address that already holds a key gets it emailed instead, so typing
+ * someone else's email never reveals their key.
+ */
+export async function requestKey(opts: { email: string; ip: string }): Promise<KeyRequestResult> {
+  const email = normEmail(opts.email);
   if (!emailIsValid(email)) return { ok: false, status: 400, error: "That doesn't look like a valid email address." };
 
-  if (opts.tier === "free") {
-    const hourly = await cache.incr(`mcp:issue:ip:${opts.ip}`, 3600);
-    if (hourly > env.keyIssuesPerIpHour) {
-      return { ok: false, status: 429, error: "Too many keys requested from this network. Try again in an hour." };
+  const hourly = await cache.incr(`mcp:issue:ip:${opts.ip}`, 3600);
+  if (hourly > env.keyIssuesPerIpHour) {
+    return { ok: false, status: 429, error: "Too many requests from this network. Try again in an hour." };
+  }
+  await recordContact(email, "dashboard", opts.ip);
+
+  const existing = (await db(
+    (sql) => sql`SELECT id, tier FROM mcp.api_keys
+                 WHERE lower(email) = ${email} AND source = 'dashboard' AND revoked_at IS NULL
+                 ORDER BY created_at`,
+  )) as { id: string; tier: Tier }[] | null;
+
+  if (existing?.length) {
+    const sent = await cache.incr(`mcp:recovery:${sha256b64url(email)}`, 3600);
+    if (sent > env.recoveryEmailsPerHour) {
+      return { ok: false, status: 429, error: "We've already emailed this address a few times this hour. Check your inbox and spam folder." };
     }
-    const active = await db(
-      (sql) => sql`SELECT count(*)::int AS n FROM mcp.api_keys WHERE lower(email) = ${email} AND revoked_at IS NULL`,
-    );
-    const n = (active as { n: number }[] | null)?.[0]?.n ?? 0;
-    if (n >= env.keysPerEmail) {
-      return { ok: false, status: 429, error: `This email already has ${n} active keys. Revoke one from the dashboard first.` };
-    }
+    if (!mailConfigured()) return { ok: false, status: 503, error: "This email already has a key, but email delivery isn't set up yet, so it can't be sent. Try again later." };
+    const msg = layout({
+      title: "Your NoteBot MCP key",
+      paragraphs: [
+        "Someone (hopefully you) asked for a NoteBot MCP key with this address. It already has one, so here it is again. It works on both the BUTEX notices and NoteBot study servers.",
+      ],
+      keys: existing.map((k) => keyFor(k.id, k.tier)),
+      action: { label: "Replace with a fresh key", url: rotateUrl(email) },
+      footer: `If you didn't ask for this, or think someone else has your key, use the button to revoke it and get a new one (link valid for 1 hour). ${footer(email)}`,
+    });
+    const ok = await sendMail({ to: email, subject: "Your NoteBot MCP key", ...msg, tags: ["key-recovery"] });
+    if (!ok) return { ok: false, status: 503, error: "This email already has a key, but sending it failed. Try again in a few minutes." };
+    await db((sql) => sql`UPDATE mcp.contacts SET recovery_emails = recovery_emails + 1 WHERE email = ${email}`);
+    return { ok: true, kind: "emailed", email };
   }
 
-  const { key, id } = mintKey(opts.tier);
+  // existing === null means the DB is unreachable: issue a key anyway (keys don't need the DB)
+  const { key, id } = mintKey("free");
+  await insertKey(id, email, "free", "dashboard", opts.ip);
+  if (mailConfigured()) {
+    const msg = layout({
+      title: "Welcome to NoteBot MCP",
+      paragraphs: [
+        "Here's a copy of the key you just created. It works on both servers: <b>BUTEX notices</b> (/butex/mcp) and the <b>NoteBot study library</b> (/notebot/mcp).",
+        `Setup guides for Claude, ChatGPT, Claude Code and Cursor: <a href="${env.publicUrl}/#connect">${env.publicUrl}/#connect</a>`,
+      ],
+      keys: [key],
+      action: { label: "Didn't request this? Replace the key", url: rotateUrl(email) },
+      footer: footer(email),
+    });
+    void sendMail({ to: email, subject: "Your NoteBot MCP key", ...msg, tags: ["key-created"] });
+  }
+  return { ok: true, kind: "created", key, id };
+}
+
+/**
+ * OAuth (Claude.ai / ChatGPT connectors): every connection gets its own key, so
+ * disconnecting one app never breaks another. Oldest OAuth keys beyond the cap
+ * are revoked automatically so reconnecting always works.
+ */
+export async function issueOauthKey(opts: { email: string; ip: string; label: string }): Promise<KeyRequestResult> {
+  const email = normEmail(opts.email);
+  if (!emailIsValid(email)) return { ok: false, status: 400, error: "That doesn't look like a valid email address." };
+  const hourly = await cache.incr(`mcp:issue:ip:${opts.ip}`, 3600);
+  if (hourly > env.keyIssuesPerIpHour * 2) return { ok: false, status: 429, error: "Too many requests from this network. Try again in an hour." };
+
+  await recordContact(email, `oauth:${opts.label}`.slice(0, 60), opts.ip);
+  const { key, id } = mintKey("free");
+  await insertKey(id, email, "free", "oauth", opts.ip, opts.label);
   await db(
-    (sql) => sql`INSERT INTO mcp.api_keys (id, email, tier, label, source, created_ip)
-                 VALUES (${id}, ${email}, ${opts.tier}, ${opts.label ?? null}, ${opts.source}, ${opts.ip})`,
+    (sql) => sql`UPDATE mcp.api_keys SET revoked_at = now()
+                 WHERE id IN (
+                   SELECT id FROM mcp.api_keys
+                   WHERE lower(email) = ${email} AND source = 'oauth' AND revoked_at IS NULL
+                   ORDER BY created_at DESC OFFSET ${env.keysPerEmail})`,
   );
-  return { ok: true, key, id };
+  return { ok: true, kind: "created", key, id };
+}
+
+/** Admin-tier key for the analytics server's OAuth flow (after the admin key was checked). */
+export async function issueAdminKey(ip: string, label: string): Promise<string> {
+  const { key, id } = mintKey("admin");
+  await insertKey(id, "admin", "admin", "oauth", ip, label);
+  return key;
+}
+
+type RotateToken = { e: string; p: string; x: number };
+
+export function readRotateToken(t: string): string | null {
+  const tok = unseal<RotateToken>(t);
+  return tok && tok.p === "rotate" && tok.x > Date.now() ? tok.e : null;
+}
+
+/** Revoke every dashboard key for the address and mint one fresh one. Link is single-use. */
+export async function rotateKeys(t: string, ip: string): Promise<{ ok: true; key: string; email: string } | { ok: false; error: string }> {
+  const email = readRotateToken(t);
+  if (!email) return { ok: false, error: "This link has expired or isn't valid. Request your key again from the dashboard." };
+  const used = `mcp:rotate:used:${sha256b64url(t)}`;
+  if (await cache.get<boolean>(used)) return { ok: false, error: "This link was already used. Request your key again to get a new link." };
+
+  const revoked = (await db(
+    (sql) => sql`UPDATE mcp.api_keys SET revoked_at = now()
+                 WHERE lower(email) = ${email} AND source = 'dashboard' AND revoked_at IS NULL RETURNING id`,
+  )) as { id: string }[] | null;
+  if (revoked === null) return { ok: false, error: "The key database is unreachable right now. Try the link again in a few minutes." };
+  for (const r of revoked) await cache.set(`mcp:revoked:${r.id}`, true, 3600);
+
+  const { key, id } = mintKey("free");
+  await insertKey(id, email, "free", "dashboard", ip, "rotated");
+  await cache.set(used, true, 2 * 3600);
+  return { ok: true, key, email };
+}
+
+export function readUnsubscribeToken(t: string): string | null {
+  const tok = unseal<{ e: string; p: string }>(t);
+  return tok?.p === "unsub" ? tok.e : null;
+}
+
+export async function unsubscribe(email: string): Promise<boolean> {
+  const r = await db((sql) => sql`UPDATE mcp.contacts SET unsubscribed_at = now() WHERE email = ${email} RETURNING email`);
+  return !!r && (r as unknown[]).length > 0;
 }
 
 /** Revoking requires the key itself, so a stranger who knows your email can't kill your keys. */

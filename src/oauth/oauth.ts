@@ -1,8 +1,7 @@
 import { env } from "../env";
 import { cache } from "../lib/cache";
 import { safeEqual, seal, sha256b64url, signBlob, unseal, verifyBlob } from "../lib/crypto";
-import { issueKey, mintKey, verifyKey } from "../lib/keys";
-import { db } from "../lib/db";
+import { issueAdminKey, issueOauthKey, verifyKey } from "../lib/keys";
 import { json } from "../lib/util";
 import { resourceUrl, type Resource } from "../mcp/handler";
 import { authorizePage } from "../web/pages";
@@ -30,7 +29,7 @@ export function protectedResourceMetadata(resource: Resource): Response {
     authorization_servers: [issuer()],
     scopes_supported: [resource],
     bearer_methods_supported: ["header"],
-    resource_name: resource === "butex" ? "BUTEX NoteBot notices" : "NoteBot Analytics (private)",
+    resource_name: { butex: "BUTEX notices", notebot: "NoteBot study library", analytics: "NoteBot Analytics (private)" }[resource],
     resource_documentation: env.publicUrl,
   });
 }
@@ -46,7 +45,7 @@ export function authServerMetadata(): Response {
     grant_types_supported: ["authorization_code", "refresh_token"],
     code_challenge_methods_supported: ["S256"],
     token_endpoint_auth_methods_supported: ["none", "client_secret_post", "client_secret_basic"],
-    scopes_supported: ["butex", "analytics"],
+    scopes_supported: ["butex", "notebot", "analytics"],
     service_documentation: env.publicUrl,
   });
 }
@@ -121,7 +120,9 @@ function readParams(src: URLSearchParams): AuthParams {
 }
 
 function resourceFor(p: AuthParams): Resource {
-  return /analytics/i.test(p.resource) || /\banalytics\b/i.test(p.scope) ? "analytics" : "butex";
+  if (/analytics/i.test(p.resource) || /\banalytics\b/i.test(p.scope)) return "analytics";
+  // one free key serves both public servers; this only picks the consent wording
+  return /notebot\/mcp/i.test(p.resource) || /\bnotebot\b/i.test(p.scope) ? "notebot" : "butex";
 }
 
 /** Validate before rendering anything: a bad client/redirect must never get a redirect back. */
@@ -166,14 +167,12 @@ export async function authorizePost(req: Request, ip: string): Promise<Response>
     if (!env.adminKey || !safeEqual(given.trim(), env.adminKey)) {
       return authorizePage({ params: p, clientName: v.client.n, mode, error: "That admin key is not correct." }, 401);
     }
-    const minted = mintKey("admin");
-    key = minted.key;
-    await db((sql) => sql`INSERT INTO mcp.api_keys (id, email, tier, label, source, created_ip)
-                           VALUES (${minted.id}, 'admin', 'admin', ${v.client.n}, 'oauth', ${ip})`);
+    key = await issueAdminKey(ip, v.client.n);
   } else {
     const email = form.get("email") ?? "";
-    const res = await issueKey({ email, tier: "free", ip, source: "oauth", label: v.client.n });
+    const res = await issueOauthKey({ email, ip, label: v.client.n });
     if (!res.ok) return authorizePage({ params: p, clientName: v.client.n, mode, error: res.error, email }, res.status);
+    if (res.kind !== "created") throw new Error("unexpected key result");
     key = res.key;
   }
 
@@ -236,7 +235,7 @@ export async function token(req: Request): Promise<Response> {
     const rt = unseal<{ k: string; rt: number }>(body.get("refresh_token") ?? "");
     const info = rt ? await verifyKey(rt.k) : null;
     if (!rt || !info) return oauthError("invalid_grant", "Refresh token is invalid or the key was revoked.");
-    return tokenResponse(rt.k, info.tier === "admin" ? "analytics" : "butex");
+    return tokenResponse(rt.k, info.tier === "admin" ? "analytics" : "butex notebot");
   }
 
   return oauthError("unsupported_grant_type", "Use authorization_code or refresh_token.");

@@ -95,3 +95,19 @@ describe("attachments", () => {
     expect(atts[1]!.kind).toBe("pdf");
   });
 });
+
+describe("key recovery", () => {
+  test("a key can be rebuilt from its id (how lost keys are emailed back)", async () => {
+    const { keyFor } = await import("../src/lib/keys");
+    const { key, id } = mintKey("free");
+    expect(keyFor(id, "free")).toBe(key);
+    expect(keyFor(id, "admin")).not.toBe(key);
+  });
+  test("rotate and unsubscribe tokens are purpose-bound and expire", async () => {
+    const { readRotateToken, readUnsubscribeToken, rotateUrl } = await import("../src/lib/keys");
+    const t = decodeURIComponent(rotateUrl("a@b.com").split("t=")[1]!);
+    expect(readRotateToken(t)).toBe("a@b.com");
+    expect(readUnsubscribeToken(t)).toBeNull();
+    expect(readRotateToken(seal({ e: "a@b.com", p: "rotate", x: Date.now() - 1 }))).toBeNull();
+  });
+});

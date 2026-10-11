@@ -345,3 +345,10 @@ pre.snippet {
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition-duration: 1ms !important; animation-duration: 150ms !important; }
 }
+
+/* Tool groups (one per server) */
+.tool-group + .tool-group { margin-top: var(--space-xl); }
+.tool-group h3 { font-size: var(--text-lg); margin-bottom: var(--space-sm); display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-2xs); }
+.endpoint-tag { font-size: var(--text-xs); font-weight: 400; color: var(--color-muted); }
+.card__title { font-size: var(--text-lg); margin-bottom: var(--space-xs); }
+.work__extras .copy + .copy { margin-top: var(--space-2xs); }

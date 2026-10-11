@@ -2,12 +2,14 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js";
 import { registerAnalyticsTools } from "../analytics/tools";
 import { registerButexTools } from "../butex/tools";
+import { NOTEBOT_INSTRUCTIONS, registerNotebotTools } from "../notebot/tools";
+import { reportAiUsage } from "../analytics/usage";
 import { env } from "../env";
 import { rateLimit, touchKey, verifyKey, type KeyInfo } from "../lib/keys";
 import { errMsg, json } from "../lib/util";
 import { VERSION } from "../version";
 
-export type Resource = "butex" | "analytics";
+export type Resource = "butex" | "notebot" | "analytics";
 
 export const BUTEX_INSTRUCTIONS = `You are connected to the official notice board of BUTEX (Bangladesh University of Textiles, Tejgaon, Dhaka), served by BUTEX NoteBot.
 
@@ -27,19 +29,25 @@ export const ANALYTICS_INSTRUCTIONS = `You are connected to the private analytic
 - Missed keywords are the best signal for content gaps — group them by subject when reporting.
 - Results flagged ⚠️ cached mean the analytics service was unreachable.`;
 
+const SERVER_INFO: Record<Resource, { name: string; title: string; instructions: () => string; register: (s: McpServer) => void }> = {
+  butex: { name: "butex-notebot", title: "BUTEX notices (NoteBot)", instructions: () => BUTEX_INSTRUCTIONS, register: registerButexTools },
+  notebot: { name: "notebot-library", title: "NoteBot study library", instructions: () => NOTEBOT_INSTRUCTIONS, register: registerNotebotTools },
+  analytics: { name: "notebot-analytics", title: "NoteBot Analytics", instructions: () => ANALYTICS_INSTRUCTIONS, register: registerAnalyticsTools },
+};
+
 function buildServer(resource: Resource): McpServer {
+  const info = SERVER_INFO[resource];
   const server = new McpServer(
     {
-      name: resource === "butex" ? "butex-notebot" : "notebot-analytics",
-      title: resource === "butex" ? "BUTEX NoteBot — official notices" : "NoteBot Analytics",
+      name: info.name,
+      title: info.title,
       version: VERSION,
       websiteUrl: env.publicUrl,
       icons: [{ src: `${env.publicUrl}/icon.png`, mimeType: "image/png" }],
     },
-    { instructions: resource === "butex" ? BUTEX_INSTRUCTIONS : ANALYTICS_INSTRUCTIONS },
+    { instructions: info.instructions() },
   );
-  if (resource === "butex") registerButexTools(server);
-  else registerAnalyticsTools(server);
+  info.register(server);
   return server;
 }
 
@@ -80,9 +88,9 @@ export async function handleMcp(req: Request, resource: Resource): Promise<Respo
   if (!info) {
     return unauthorized(
       resource,
-      resource === "butex"
-        ? `Missing or invalid API key. Get a free key at ${env.publicUrl} (just an email), or connect through OAuth.`
-        : "This endpoint is private.",
+      resource === "analytics"
+        ? "This endpoint is private."
+        : `Missing or invalid API key. Get a free key at ${env.publicUrl} (just an email), or connect through OAuth.`,
     );
   }
   if (resource === "analytics" && info.tier !== "admin") return unauthorized(resource, "Admin access required.", 403);
@@ -96,11 +104,22 @@ export async function handleMcp(req: Request, resource: Resource): Promise<Respo
   }
   touchKey(info.id);
 
+  let parsedBody: unknown;
+  try {
+    parsedBody = await req.json();
+  } catch {
+    return json({ jsonrpc: "2.0", error: { code: -32700, message: "Parse error: body must be JSON-RPC" }, id: null }, { status: 400 });
+  }
+  if (resource !== "analytics") {
+    const calls = (Array.isArray(parsedBody) ? parsedBody : [parsedBody]).filter((m) => (m as { method?: string })?.method === "tools/call").length;
+    if (calls) reportAiUsage(calls);
+  }
+
   const server = buildServer(resource);
   const transport = new WebStandardStreamableHTTPServerTransport({ sessionIdGenerator: undefined, enableJsonResponse: true });
   try {
     await server.connect(transport);
-    const res = await transport.handleRequest(req, { authInfo: { token: info.id, clientId: info.id, scopes: [info.tier] } });
+    const res = await transport.handleRequest(req, { parsedBody, authInfo: { token: info.id, clientId: info.id, scopes: [info.tier] } });
     return res;
   } catch (err) {
     console.error("mcp request failed:", err);
