@@ -98,7 +98,7 @@ export const rotateUrl = (email: string) =>
   `${env.publicUrl}/keys/rotate?t=${encodeURIComponent(seal({ e: email, p: "rotate", x: Date.now() + ROTATE_TTL_MS }))}`;
 
 const footer = (email: string) =>
-  `Sent to ${email} because this address was entered at <a href="${env.publicUrl}" style="color:#6b7686">ai.butexnotebot.com</a>. NoteBot is a student project, not an official BUTEX service. <a href="${unsubscribeUrl(email)}" style="color:#6b7686">Unsubscribe from updates</a>.`;
+  `Sent to ${email} because this address was entered at <a href="${env.publicUrl}" style="color:#6b7686">ai.butexnotebot.com</a>. NoteBot is an independent, community-driven project, not an official BUTEX service. <a href="${unsubscribeUrl(email)}" style="color:#6b7686">Unsubscribe from updates</a>.`;
 
 export type KeyRequestResult =
   | { ok: true; kind: "created"; key: string; id: string }

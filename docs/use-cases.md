@@ -50,7 +50,7 @@ Every tool is read-only. Nothing here can change data on butex.edu.bd, in NoteBo
 
 **Tools:** notices: `butex_latest_notices`, `butex_search_notices`, `butex_schedules`, `butex_results`, `butex_department_notices`, `butex_read_notice`, `butex_categories`; the rest of the site: `butex_department`, `butex_faculty`, `butex_page`, `butex_directory`; plus `butex_status`, and `search` and `fetch` for ChatGPT.
 
-**Good to know:** level and term are matched however you write them (`L2T1`, `L-2 T-1`, `Level 2 Term 1`). Only official `@butex.edu.bd` emails are shown; personal addresses that appear on the site are left out. Some official pages (admission, programs, conferences) have no text of their own, so the answer comes from the notices instead. NoteBot is a student project, so double-check exam dates on the linked notice.
+**Good to know:** level and term are matched however you write them (`L2T1`, `L-2 T-1`, `Level 2 Term 1`). Only official `@butex.edu.bd` emails are shown; personal addresses that appear on the site are left out. Some official pages (admission, programs, conferences) have no text of their own, so the answer comes from the notices instead. NoteBot is a independent, community-driven project, so double-check exam dates on the linked notice.
 
 ---
 

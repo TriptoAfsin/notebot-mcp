@@ -114,4 +114,4 @@ The `butex-notebot` skill teaches your agent which tool to use for which questio
 | "Rate limit" | Free keys allow 60 requests/minute and 5,000/day. |
 | Stopped working after you replaced your key | Paste the new key into each client. |
 
-NoteBot is a student project, not an official BUTEX service. Questions: reply to any NoteBot email.
+NoteBot is an independent, community-driven project, not an official BUTEX service. Questions: reply to any NoteBot email.

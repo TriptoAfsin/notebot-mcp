@@ -3,7 +3,7 @@ name: butex-notebot
 description: Help BUTEX (Bangladesh University of Textiles) students through two NoteBot MCP servers — the official butex.edu.bd website (notices, class routines, exam schedules, results, admission, plus departments, teachers and their research, offices, halls and programs) and NoteBot (notes, books, lab reports, question banks, syllabus, study plans and recommendations). Use whenever the user mentions BUTEX, NoteBot, butex.edu.bd, a BUTEX level/term (e.g. L2-T1), a BUTEX subject (Math-I, YM-I, FM-I…) or department (yarn, fabric, wet process, apparel, TFD, TEM, TMDM, IPE, DCE, ESE), or asks for notes, lab reports, a study plan, a BUTEX teacher, office or hall, or "is there a new notice / routine / result" in a BUTEX context.
 ---
 
-<!-- butex-notebot skill version: 1.2.4 -->
+<!-- butex-notebot skill version: 1.2.5 -->
 
 # BUTEX NoteBot
 
@@ -85,7 +85,7 @@ previous questions in the final third and light revision on the last day. Use
 - If nothing matches, widen once (drop tokens, switch to `butex_search_notices`, then
   `butex_latest_notices` with the category) before saying it isn't published yet.
 - Respond in the user's language (Bangla or English); keep notice titles verbatim.
-- NoteBot is a student project, not an official BUTEX service. Don't claim otherwise.
+- NoteBot is an independent, community-driven project, not an official BUTEX service. Don't claim otherwise.
 
 ## 4. When tools fail
 

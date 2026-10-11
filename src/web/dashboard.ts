@@ -36,7 +36,7 @@ ${o.body}
 <footer class="foot">
   <div class="wrap">
     <span>NoteBot MCP v${esc(VERSION)}</span>
-    <span>A student project. Not an official BUTEX service. Notices come from <a href="https://www.butex.edu.bd">butex.edu.bd</a>; notes from the NoteBot community.</span>
+    <span>An independent, community-driven project. Not an official BUTEX service. Notices come from <a href="https://www.butex.edu.bd">butex.edu.bd</a>; notes from the NoteBot community.</span>
     <a href="https://butexnotebot.com">butexnotebot.com</a>
     <a href="/health">Status</a>
   </div>
@@ -72,6 +72,10 @@ export function dashboardPage(d: DashboardData): Response {
   const body = `<section class="wrap hero">
   <h1 class="hero__title rise">Ask your AI about BUTEX.</h1>
   <p class="hero__lede rise" style="--i:1">Two free MCP servers that plug into Claude, ChatGPT, Gemini and your code editor. Pick one, or set up both: one email covers them.</p>
+  <ol class="hero__steps rise" style="--i:2" aria-label="How to start">
+    <li><span class="hero__num" aria-hidden="true">1</span><div><b>Get your free key</b><span>Enter your email. One key works for both servers.</span></div><a class="btn btn--primary btn--sm" href="/key">Get your key<span class="btn__arrow" aria-hidden="true">→</span></a></li>
+    <li><span class="hero__num" aria-hidden="true">2</span><div><b>Set up a server</b><span>Pick BUTEX MCP or NoteBot below and follow the steps for your app.</span></div><a class="btn btn--quiet btn--sm" href="#choose">Pick a server<span class="btn__arrow" aria-hidden="true">↓</span></a></li>
+  </ol>
 </section>
 
 <section class="wrap choose" id="choose" aria-label="Pick a server">
