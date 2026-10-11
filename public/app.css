@@ -361,3 +361,8 @@ pre.snippet {
 .uc li { background: var(--color-paper-2); border: 1px solid var(--color-rule); border-radius: var(--radius-card); padding: var(--space-sm); display: grid; gap: var(--space-3xs); align-content: start; min-width: 0; }
 .uc-ask { color: var(--color-ink); font-weight: 600; overflow-wrap: anywhere; }
 .uc-get { color: var(--color-ink-2); font-size: var(--text-sm); }
+/* The agent prompt is prose: wrap it instead of scrolling. */
+#skill-agent { white-space: pre-wrap; overflow-wrap: anywhere; }
+.key-next { display: grid; gap: var(--space-xs); margin-top: var(--space-sm); }
+.key-next .steps { font-size: var(--text-sm); }
+.key-next .btn { justify-self: start; }

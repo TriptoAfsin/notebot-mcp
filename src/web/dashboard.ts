@@ -13,6 +13,47 @@ function snippet(id: string, label: string, body: string) {
 </div>`;
 }
 
+/** Shown with a new (or emailed) key: the short connect guide plus the full-guide link. */
+function nextSteps() {
+  const guide = `${env.publicUrl}/#connect`;
+  return `<div class="key-next">
+          <p class="label">Next: connect it</p>
+          <ol class="steps">
+            <li><b>Claude</b>: Settings → Connectors → Add custom connector, paste an endpoint, then Connect.</li>
+            <li><b>ChatGPT</b>: Settings → Apps &amp; Connectors → Developer mode → Create, with OAuth.</li>
+            <li><b>Claude Code, Cursor, others</b>: copy a snippet from the guide; your key is already filled in.</li>
+          </ol>
+          <p class="hint">Full guide: <a href="#connect">${esc(guide)}</a></p>
+          <a class="btn" href="#connect">Set up a client</a>
+        </div>`;
+}
+
+/** Step-by-step setup an agent can follow on its own; served at /setup.md. */
+export function agentSetup() {
+  const u = env.publicUrl;
+  return `# Set up BUTEX NoteBot
+
+Do these steps for the user.
+
+1. Install the agent skill "butex-notebot":
+   - macOS / Linux / Git Bash: \`curl -fsSL ${u}/skill/install.sh | sh\`
+   - Windows PowerShell: \`irm ${u}/skill/install.ps1 | iex\`
+   - Any other agent: download ${u}/skill/butex-notebot.zip and unzip it into your skills folder. The skill itself is ${u}/skill/SKILL.md.
+2. Add both MCP servers (Streamable HTTP; sign in with OAuth when asked):
+   - butex: ${u}/butex/mcp
+   - notebot: ${u}/notebot/mcp
+   - Claude Code: \`claude mcp add --transport http butex ${u}/butex/mcp\` and \`claude mcp add --transport http notebot ${u}/notebot/mcp\`
+   - No OAuth support: ask the user for their free key (${u}/#get-key) and send it as the header \`Authorization: Bearer <key>\`.
+3. Read ${u}/llms.txt for what each server does.
+4. Confirm it works by calling butex_status and notebot_status, then tell the user what they can ask.
+`;
+}
+
+/** The short prompt the dashboard asks people to paste into their agent. */
+function agentPrompt() {
+  return `Set up BUTEX NoteBot for me: follow ${env.publicUrl}/setup.md (installs the butex-notebot skill and adds the BUTEX and NoteBot MCP servers).`;
+}
+
 type UseCase = { who: string; ask: string; get: string };
 type UseCaseGroup = { server: string; endpoint: string; blurb: string; cases: UseCase[] };
 
@@ -203,11 +244,11 @@ export function dashboardPage(d: DashboardData): Response {
       <div class="key-reveal" data-key-reveal hidden>
         <p class="notice">Copy it now. A copy is in your inbox too. It works on both servers, and the snippets below already include it.</p>
         <div class="copy"><code id="new-key"></code>${copyBtn("#new-key")}</div>
-        <a class="btn" href="#connect">Set up a client</a>
+        ${nextSteps()}
       </div>
       <div class="key-reveal" data-key-emailed hidden>
         <p class="notice" data-key-emailed-text role="status"></p>
-        <a class="btn" href="#connect">Set up a client</a>
+        ${nextSteps()}
       </div>
     </section>
 
@@ -255,6 +296,7 @@ export function dashboardPage(d: DashboardData): Response {
           <a class="btn" href="/skill/SKILL.md">View SKILL.md</a>
         </div>
         <p class="hint">On claude.ai: Settings → Capabilities → Skills → Upload skill, and pick the zip.</p>
+        ${snippet("skill-agent", "Or hand it to your agent", agentPrompt())}
       </div>
     </div>
   </section>

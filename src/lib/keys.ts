@@ -135,6 +135,7 @@ export async function requestKey(opts: { email: string; ip: string }): Promise<K
       title: "Your NoteBot MCP key",
       paragraphs: [
         "Someone (hopefully you) asked for a NoteBot MCP key with this address. It already has one, so here it is again. It works on both servers: the BUTEX MCP and the NoteBot knowledge base.",
+        `Setup guides for Claude, ChatGPT, Claude Code and Cursor: <a href="${env.publicUrl}/#connect">${env.publicUrl}/#connect</a>`,
       ],
       keys: existing.map((k) => keyFor(k.id, k.tier)),
       action: { label: "Replace with a fresh key", url: rotateUrl(email) },
