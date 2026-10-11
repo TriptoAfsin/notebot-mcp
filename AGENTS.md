@@ -24,7 +24,7 @@ The server sends these as MCP `instructions` on connect (source of truth: `BUTEX
 Source of truth: `NOTEBOT_INSTRUCTIONS` in `src/notebot/tools.ts`.
 
 - **Find material:** use `notebot_search` for named topics. To explore a level, go `notebot_browse` → `notebot_subject`. Use `notebot_lab_reports` for labs and `notebot_question_banks` for previous questions.
-- **Explain concepts:** `notebot_ask` (TexGPT). Cite the library sources it returns, and point to matching notes.
+- **Explain concepts:** `notebot_ask` (TexGPT). Cite the knowledge-base sources it returns, and point to matching notes.
 - **Plan studying:** `notebot_study_plan` gathers the material; the agent writes a realistic day-by-day plan with exact links. `notebot_recommend` gives what's popular.
 - Levels are 1–4. Subjects take names or codes (`Math-I` = `math1`). Never invent links.
 - Official notices, exam dates and new results come from the `butex` server. NoteBot's routines and results are an archive.

@@ -103,7 +103,7 @@ if (parsed.results?.[0]) {
   const f = JSON.parse(toolText(await callTool(key, "fetch", { id: parsed.results[0].id })) || "{}");
   check("fetch (ChatGPT)", !!f.id && !!f.text && !!f.url, f.title?.slice(0, 60));
 }
-// ── NoteBot library server (same key)
+// ── NoteBot knowledge base server (same key)
 const nbList = await rpc("/notebot/mcp", key, "tools/list");
 const nbNames: string[] = nbList.body?.result?.tools?.map((t: any) => t.name) ?? [];
 check("notebot tools/list (same key)", nbNames.includes("notebot_study_plan") && nbNames.includes("notebot_ask"), `${nbNames.length} tools`);

@@ -60,8 +60,8 @@ export function authorizePage(v: AuthorizeView, status = 200): Response {
 
   const body = v.fatal
     ? `<h1>Can't connect</h1><p>${esc(v.fatal)}</p><p class="fine">Remove the connector in your app and add it again. If it keeps failing, use an API key from <a href="/">the dashboard</a>.</p>`
-    : `<h1>${client} wants to use ${admin ? "NoteBot Analytics" : v.mode === "notebot" ? "the NoteBot library" : "BUTEX notices"}</h1>
-<p>${admin ? "This server is private. Enter the admin key to continue." : v.mode === "notebot" ? "It will be able to read the NoteBot library (notes, books, lab reports, question banks) and ask TexGPT. Enter your email to create a free key for it. The key also works for BUTEX notices." : "It will be able to read official BUTEX notices, schedules and results. Enter your email to create a free key for it."}</p>
+    : `<h1>${client} wants to use ${admin ? "NoteBot Analytics" : v.mode === "notebot" ? "the NoteBot knowledge base" : "BUTEX notices"}</h1>
+<p>${admin ? "This server is private. Enter the admin key to continue." : v.mode === "notebot" ? "It will be able to read the NoteBot knowledge base (notes, books, lab reports, question banks) and ask TexGPT. Enter your email to create a free key for it. The key also works for BUTEX notices." : "It will be able to read official BUTEX notices, schedules and results. Enter your email to create a free key for it."}</p>
 <form method="post" action="/oauth/authorize" novalidate>
   ${hidden}
   <div class="field">

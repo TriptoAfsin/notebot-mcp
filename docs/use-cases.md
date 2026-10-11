@@ -5,10 +5,10 @@ Three servers live at `https://ai.butexnotebot.com`. The first two are free for 
 | Server | Endpoint | Who |
 | --- | --- | --- |
 | BUTEX notices | `/butex/mcp` | anyone (free key or sign-in) |
-| NoteBot library | `/notebot/mcp` | anyone (same key) |
+| NoteBot knowledge base | `/notebot/mcp` | anyone (same key) |
 | NoteBot analytics | `/analytics/mcp` | owner only (admin key) |
 
-Every tool is read-only. Nothing here can change data on butex.edu.bd, in the NoteBot library or in analytics.
+Every tool is read-only. Nothing here can change data on butex.edu.bd, in the NoteBot knowledge base or in analytics.
 
 ---
 
@@ -43,9 +43,9 @@ Every tool is read-only. Nothing here can change data on butex.edu.bd, in the No
 
 ---
 
-## 2. NoteBot library — `/notebot/mcp`
+## 2. NoteBot knowledge base — `/notebot/mcp`
 
-**What it reads:** the NoteBot engine (the same library behind the NoteBot app, website and Messenger bot): notes, books, lab reports, question banks, syllabus, saved routines and old results shared by BUTEX students, plus TexGPT.
+**What it reads:** the NoteBot engine (the same knowledge base behind the NoteBot app, website and Messenger bot): notes, books, lab reports, question banks, syllabus, saved routines and old results shared by BUTEX students, plus TexGPT.
 
 **What you get:**
 - Notes and books by level (1–4) and subject, topic by topic
@@ -53,7 +53,7 @@ Every tool is read-only. Nothing here can change data on butex.edu.bd, in the No
 - Previous questions and suggestions
 - Syllabus by batch
 - TexGPT answers to textile questions, drawn from NoteBot's books with the sources named
-- Study plans built from the real topics and links in the library
+- Study plans built from the real topics and links in the knowledge base
 - Recommendations from what other students open most
 
 **Use cases:**

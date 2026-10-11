@@ -5,7 +5,7 @@ Connect your AI assistant to two free servers for BUTEX students:
 | Server | URL | What it gives your AI |
 | --- | --- | --- |
 | **BUTEX notices** | `https://ai.butexnotebot.com/butex/mcp` | Official butex.edu.bd notices: class routines, exam schedules, results, admission, department notices. It reads the scanned notices for you. |
-| **NoteBot library** | `https://ai.butexnotebot.com/notebot/mcp` | Notes, books, lab reports, question banks and syllabus shared by students; TexGPT answers; study plans and recommendations. |
+| **NoteBot knowledge base** | `https://ai.butexnotebot.com/notebot/mcp` | Notes, books, lab reports, question banks and syllabus shared by students; TexGPT answers; study plans and recommendations. |
 
 Add one or both. **One free key works on both.** Not sure what to ask? See [use-cases.md](use-cases.md).
 
@@ -18,7 +18,7 @@ No key needed: Claude signs you in.
 1. On **claude.ai**, open **Settings → Connectors → Add custom connector**.
 2. Name: `BUTEX notices`. URL: `https://ai.butexnotebot.com/butex/mcp`. Leave the advanced/OAuth fields empty, then click **Add**.
 3. Click **Connect**. A NoteBot page opens. Enter your email and press **Allow**.
-4. Repeat with name `NoteBot library` and URL `https://ai.butexnotebot.com/notebot/mcp`.
+4. Repeat with name `NoteBot knowledge base` and URL `https://ai.butexnotebot.com/notebot/mcp`.
 5. In a chat, open the tools menu (the slider icon) and turn the connectors on.
 
 Connectors added on the web appear automatically in the Claude **desktop** and **mobile** apps.
@@ -31,7 +31,7 @@ Connectors added on the web appear automatically in the Claude **desktop** and *
 2. Back in **Apps & Connectors**, choose **Create**.
 3. Name: `BUTEX notices`. MCP server URL: `https://ai.butexnotebot.com/butex/mcp`. Authentication: **OAuth**. Tick that you trust the app, then **Create**.
 4. Approve with your email on the NoteBot page that opens.
-5. Repeat for `NoteBot library` with `https://ai.butexnotebot.com/notebot/mcp`.
+5. Repeat for `NoteBot knowledge base` with `https://ai.butexnotebot.com/notebot/mcp`.
 6. In a chat, press **+** and pick the app. It syncs to the ChatGPT mobile and desktop apps.
 
 ## 3. Get a key (for Claude Code, Cursor, VS Code and others)

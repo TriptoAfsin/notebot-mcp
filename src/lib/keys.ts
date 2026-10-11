@@ -153,7 +153,7 @@ export async function requestKey(opts: { email: string; ip: string }): Promise<K
     const msg = layout({
       title: "Welcome to NoteBot MCP",
       paragraphs: [
-        "Here's a copy of the key you just created. It works on both servers: <b>BUTEX notices</b> (/butex/mcp) and the <b>NoteBot study library</b> (/notebot/mcp).",
+        "Here's a copy of the key you just created. It works on both servers: <b>BUTEX notices</b> (/butex/mcp) and the <b>NoteBot knowledge base</b> (/notebot/mcp).",
         `Setup guides for Claude, ChatGPT, Claude Code and Cursor: <a href="${env.publicUrl}/#connect">${env.publicUrl}/#connect</a>`,
       ],
       keys: [key],

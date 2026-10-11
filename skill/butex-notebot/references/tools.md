@@ -1,6 +1,6 @@
 # BUTEX NoteBot tool reference
 
-**Part 1: `butex` server (official notices).** Part 2 covers the `notebot` library.
+**Part 1: `butex` server (official notices).** Part 2 covers the `notebot` knowledge base.
 
 All tools are read-only. Every listing line reads:
 `- [YYYY-MM-DD] Title` / `id N · Categories · K images/pdfs` / `URL`.
@@ -55,7 +55,7 @@ ChatGPT-compatible pair: `search(query)` returns JSON `{results:[{id,title,url}]
 
 ---
 
-# Part 2: `notebot` server (NoteBot study library)
+# Part 2: `notebot` server (NoteBot knowledge base)
 
 All arguments that take `level` accept 1–4, "L2" or "Level 2". Subjects accept names or codes
 ("Math-I" = "math1", "Yarn Manufacturing I" = "ym1"); a miss returns the valid list.

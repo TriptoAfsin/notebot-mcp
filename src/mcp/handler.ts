@@ -31,7 +31,7 @@ export const ANALYTICS_INSTRUCTIONS = `You are connected to the private analytic
 
 const SERVER_INFO: Record<Resource, { name: string; title: string; instructions: () => string; register: (s: McpServer) => void }> = {
   butex: { name: "butex-notebot", title: "BUTEX notices (NoteBot)", instructions: () => BUTEX_INSTRUCTIONS, register: registerButexTools },
-  notebot: { name: "notebot-library", title: "NoteBot study library", instructions: () => NOTEBOT_INSTRUCTIONS, register: registerNotebotTools },
+  notebot: { name: "notebot-knowledge-base", title: "NoteBot knowledge base", instructions: () => NOTEBOT_INSTRUCTIONS, register: registerNotebotTools },
   analytics: { name: "notebot-analytics", title: "NoteBot Analytics", instructions: () => ANALYTICS_INSTRUCTIONS, register: registerAnalyticsTools },
 };
 

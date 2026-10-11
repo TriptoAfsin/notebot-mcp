@@ -1,15 +1,15 @@
 ---
 name: butex-notebot
-description: Help BUTEX (Bangladesh University of Textiles) students through two NoteBot MCP servers — official butex.edu.bd notices (class routines, exam schedules, results, admission, department notices) and the NoteBot study library (notes, books, lab reports, question banks, syllabus, TexGPT answers, study plans and recommendations). Use whenever the user mentions BUTEX, NoteBot, butex.edu.bd, a BUTEX level/term (e.g. L2-T1), a BUTEX subject (Math-I, YM-I, FM-I…) or department (yarn, fabric, wet process, apparel, TFD, TEM, TMDM, IPE, DCE, ESE), or asks for notes, lab reports, a study plan, or "is there a new notice / routine / result" in a BUTEX context.
+description: Help BUTEX (Bangladesh University of Textiles) students through two NoteBot MCP servers — official butex.edu.bd notices (class routines, exam schedules, results, admission, department notices) and the NoteBot knowledge base (notes, books, lab reports, question banks, syllabus, TexGPT answers, study plans and recommendations). Use whenever the user mentions BUTEX, NoteBot, butex.edu.bd, a BUTEX level/term (e.g. L2-T1), a BUTEX subject (Math-I, YM-I, FM-I…) or department (yarn, fabric, wet process, apparel, TFD, TEM, TMDM, IPE, DCE, ESE), or asks for notes, lab reports, a study plan, or "is there a new notice / routine / result" in a BUTEX context.
 ---
 
-<!-- butex-notebot skill version: 1.1.0 -->
+<!-- butex-notebot skill version: 1.1.1 -->
 
 # BUTEX NoteBot
 
 Two MCP servers, one free key:
 - `butex` (`https://ai.butexnotebot.com/butex/mcp`): official BUTEX notices. Tools are named `butex_*`.
-- `notebot` (`https://ai.butexnotebot.com/notebot/mcp`): the NoteBot study library. Tools are named `notebot_*`.
+- `notebot` (`https://ai.butexnotebot.com/notebot/mcp`): the NoteBot knowledge base. Tools are named `notebot_*`.
 
 ## 0. Keep this skill current (run first, once per session)
 
@@ -52,7 +52,7 @@ https://www.butex.edu.bd/results-published/.
 | What exists for a level | `notebot_browse` |
 | Lab reports | `notebot_lab_reports` |
 | Previous questions | `notebot_question_banks`, and the "questions"/"suggestion" topics in `notebot_subject` |
-| Explain a concept | `notebot_ask` (TexGPT, answers from the library with sources) |
+| Explain a concept | `notebot_ask` (TexGPT, answers from the knowledge base with sources) |
 | Study plan / exam prep | `notebot_study_plan` → you write the day-by-day plan; `notebot_recommend` for what's popular |
 | Syllabus | `notebot_syllabus` |
 

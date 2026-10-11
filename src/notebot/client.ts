@@ -142,7 +142,7 @@ export async function search(q: string, limit = 10) {
   return get<{ results: SearchHit[] }>(`/app/search?q=${encodeURIComponent(q)}&limit=${limit}`, 900, { allow404: { results: [] } });
 }
 
-/** TexGPT: engine-v2's RAG answer over the NoteBot library. Not cached per user question beyond 1 day. */
+/** TexGPT: engine-v2's RAG answer over the NoteBot knowledge base. Not cached per user question beyond 1 day. */
 export async function texGpt(query: string): Promise<{ answer: string; sources: { title: string; url?: string }[] }> {
   const { data } = await cachedFetch(`engine:texgpt:${query.toLowerCase().trim()}`, 24 * 3600, async () => {
     const { data } = await fetchJson<{ success?: boolean; result?: { response?: string; data?: { filename?: string; attributes?: { url?: string } }[] } }>(

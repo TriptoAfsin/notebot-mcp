@@ -5,7 +5,7 @@ MCP servers for the BUTEX NoteBot family, served from **https://ai.butexnotebot.
 | Endpoint | Who | What |
 | --- | --- | --- |
 | `/butex/mcp` | anyone (free key or OAuth) | official butex.edu.bd notices: class routines, exam schedules, results, admission, department notices, with scanned notices read for the model |
-| `/notebot/mcp` | anyone (same key) | the NoteBot library via notebot-engine-v2: notes, books, lab reports, question banks, syllabus, TexGPT answers, study plans, recommendations |
+| `/notebot/mcp` | anyone (same key) | the NoteBot knowledge base via notebot-engine-v2: notes, books, lab reports, question banks, syllabus, TexGPT answers, study plans, recommendations |
 | `/analytics/mcp` | owner only (admin key) | NoteBot usage analytics via notebot-analytics-go |
 | `/` | humans | dashboard: get a free key with an email (a repeat email gets its key *emailed*, never shown), copy client configs, install the skill, check or revoke a key |
 

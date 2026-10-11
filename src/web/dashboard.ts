@@ -32,7 +32,7 @@ const USE_CASES: UseCaseGroup[] = [
     ],
   },
   {
-    server: "NoteBot library",
+    server: "NoteBot knowledge base",
     endpoint: "/notebot/mcp",
     blurb: "Notes, books, lab reports and previous questions shared by BUTEX students, plus TexGPT answers and study plans built from them.",
     cases: [
@@ -75,11 +75,11 @@ function clientTabs(butex: string, notebot: string): Tab[] {
       label: "Claude web & app",
       steps: [
         "Open claude.ai → Settings → Connectors → <b>Add custom connector</b>.",
-        "Add one connector per server: name it <b>BUTEX notices</b> or <b>NoteBot library</b>, and paste its URL below. Leave the OAuth fields empty.",
+        "Add one connector per server: name it <b>BUTEX notices</b> or <b>NoteBot knowledge base</b>, and paste its URL below. Leave the OAuth fields empty.",
         "Click <b>Connect</b>. A NoteBot page opens; enter your email to approve.",
         "Connectors you add on the web also show up in the Claude desktop and mobile apps. Turn them on per chat from the tools menu.",
       ],
-      snippets: [["BUTEX notices URL", butex], ["NoteBot library URL", notebot]],
+      snippets: [["BUTEX notices URL", butex], ["NoteBot knowledge base URL", notebot]],
     },
     {
       id: "chatgpt",
@@ -90,7 +90,7 @@ function clientTabs(butex: string, notebot: string): Tab[] {
         "Set Authentication to <b>OAuth</b>, tick that you trust the app, then create it. Approve with your email on the NoteBot page.",
         "Pick them from the <b>+</b> menu in a chat. They sync to the ChatGPT mobile and desktop apps.",
       ],
-      snippets: [["BUTEX notices URL", butex], ["NoteBot library URL", notebot]],
+      snippets: [["BUTEX notices URL", butex], ["NoteBot knowledge base URL", notebot]],
     },
     {
       id: "code",
@@ -163,7 +163,7 @@ export function dashboardPage(d: DashboardData): Response {
     .map((srv) => `<div class="card"><h3 class="card__title">${esc(srv.name)}</h3><pre class="guidelines">${esc(srv.guidelines)}</pre></div>`)
     .join("");
 
-  const html = `${head("NoteBot MCP — BUTEX notices and study notes for your AI", "Free MCP servers for BUTEX students: official notices, routines and results, plus the NoteBot library of notes, lab reports and study plans. Works in Claude, ChatGPT, Claude Code and Cursor.")}
+  const html = `${head("NoteBot MCP — BUTEX notices and study notes for your AI", "Free MCP servers for BUTEX students: official notices, routines and results, plus the NoteBot knowledge base of notes, lab reports and study plans. Works in Claude, ChatGPT, Claude Code and Cursor.")}
 <body>
 <a class="skip" href="#main">Skip to content</a>
 <header class="bar" data-bar>
@@ -180,7 +180,7 @@ export function dashboardPage(d: DashboardData): Response {
   <div class="wrap work">
     <section class="work__intro rise" aria-labelledby="h1">
       <div class="title-row"><h1 id="h1">Your BUTEX study desk, inside your AI.</h1></div>
-      <p class="lede">Two MCP servers for Claude, ChatGPT and your editor. <b>BUTEX notices</b> reads the official notice board: routines, exam schedules, results. <b>NoteBot library</b> serves the notes, books, lab reports and question banks students share, and builds study plans from them.</p>
+      <p class="lede">Two MCP servers for Claude, ChatGPT and your editor. <b>BUTEX notices</b> reads the official notice board: routines, exam schedules, results. <b>NoteBot knowledge base</b> serves the notes, books, lab reports and question banks students share, and builds study plans from them.</p>
       <ul class="facts">
         <li>Free. One key, which only needs an email, works on both servers.</li>
         <li>Works in Claude and ChatGPT on web, desktop and mobile, plus Claude Code, Cursor and VS Code.</li>
@@ -236,7 +236,7 @@ export function dashboardPage(d: DashboardData): Response {
 
   <section class="section" id="tools" aria-labelledby="tools-h">
     <div class="wrap">
-      <div class="section__head"><h2 id="tools-h">Tools</h2><p>Every tool is read-only. BUTEX notices reads butex.edu.bd's own data feed; NoteBot library reads the NoteBot engine. Results are cached so neither source gets hammered.</p></div>
+      <div class="section__head"><h2 id="tools-h">Tools</h2><p>Every tool is read-only. BUTEX notices reads butex.edu.bd's own data feed; NoteBot knowledge base reads the NoteBot engine. Results are cached so neither source gets hammered.</p></div>
       ${toolGroups}
     </div>
   </section>
