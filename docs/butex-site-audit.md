@@ -25,7 +25,7 @@ schedules are notices like any other, filed mostly under *Academic Notices*.
 | All notices (3,458) | `GET /wp-json/wp/v2/posts` | `search`, `categories`, `after`/`before`, `per_page≤100`, `page`; `X-WP-Total` header |
 | Categories (56) | `GET /wp-json/wp/v2/categories` | ids and counts; parent tree |
 | Single notice | `GET /wp-json/wp/v2/posts/{id}` or `?slug=` | body HTML with attachment links and `srcset` sizes |
-| Pages (230) | `GET /wp-json/wp/v2/pages` | department/office pages, journal, convocation. Mostly static |
+| Pages (230) | `GET /wp-json/wp/v2/pages` | department/office pages, journal, convocation. **The REST body is empty**: the theme's page builder renders the content, so the MCP reads the HTML (see below) |
 | Search | `GET /wp-json/wp/v2/search?search=` | posts and pages |
 | Media | `/wp-content/uploads/YYYY/MM/*` | JPG scans (with 768/1087/1449 px variants), PDFs |
 
@@ -61,6 +61,26 @@ Empty or near-empty categories ("B.Sc. in Textile Eng L-x T-y", "Formats",
 - `page` past the end returns HTTP 400, which is treated as an empty page, not an outage.
 - The host is LiteSpeed with no rate-limit headers seen. The MCP caches lists for 10–30 min,
   categories for 24 h and PDF text for 7 days, and keeps a 300-notice archive warm every 20 min.
+
+## Departments, faculty, offices, halls (pages)
+
+The site's menu lists 5 faculties with 18 departments, 16 offices, 4 halls, programs,
+research/conference pages, admission and student services. Their content is only in the
+rendered HTML, so `src/butex/site.ts` parses it:
+
+- Content lives under `#primary` up to `#footer`; department pages put faculty cards
+  *after* the sidebar, so the sidebar is cut out instead of used as the end marker.
+- Faculty and staff are `team-member-article` cards: `team-member-i` (designation),
+  `member-b` (name), `member-details` (highlights, interests, education, publications,
+  courses, contact). 16–25 per department; offices and halls list their officers the same way.
+- The department head is the first `azoom-text-details` block (name, role, role email).
+- Some pages are empty templates with only a banner: admission, undergraduate/postgraduate
+  programs, PhD, conferences, convocation, affiliated colleges, ICT cell, the faculty landing
+  pages. The MCP says so and points to notices.
+- Some cards and office tables list personal Gmail/Yahoo addresses. The MCP keeps only
+  `@butex.edu.bd` addresses.
+- The homepage 302s to `/homepage/`. Pages are cached 12 h; the people index (~40 pages)
+  is rebuilt at most twice a day.
 
 ## Not available
 

@@ -43,9 +43,11 @@ export type FetchOpts = {
   init?: RequestInit;
   timeoutMs?: number;
   retries?: number;
+  /** "text" returns the body as a string (HTML pages); default parses JSON. */
+  as?: "json" | "text";
 };
 
-/** GET/POST JSON with per-attempt timeout, exponential backoff and a per-upstream circuit breaker. */
+/** GET/POST JSON (or text) with per-attempt timeout, exponential backoff and a per-upstream circuit breaker. */
 export async function fetchJson<T>(url: string, opts: FetchOpts): Promise<{ data: T; headers: Headers }> {
   const b = breaker(opts.upstream);
   if (Date.now() < b.openUntil) {
@@ -60,7 +62,7 @@ export async function fetchJson<T>(url: string, opts: FetchOpts): Promise<{ data
     try {
       const res = await fetch(url, {
         ...opts.init,
-        headers: { "user-agent": "NoteBotMCP/1.0 (+https://ai.butexnotebot.com)", accept: "application/json", ...opts.init?.headers },
+        headers: { "user-agent": "NoteBotMCP/1.0 (+https://ai.butexnotebot.com)", accept: opts.as === "text" ? "text/html,*/*" : "application/json", ...opts.init?.headers },
         signal: AbortSignal.timeout(timeoutMs),
       });
       if (!res.ok) {
@@ -70,7 +72,7 @@ export async function fetchJson<T>(url: string, opts: FetchOpts): Promise<{ data
         }
         throw new UpstreamError(`${opts.upstream} returned HTTP ${res.status}`, res.status);
       }
-      const data = (await res.json()) as T;
+      const data = (opts.as === "text" ? await res.text() : await res.json()) as T;
       b.failures = 0;
       b.lastOk = Date.now();
       return { data, headers: res.headers };

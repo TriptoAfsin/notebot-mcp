@@ -1,14 +1,14 @@
 ---
 name: butex-notebot
-description: Help BUTEX (Bangladesh University of Textiles) students through two NoteBot MCP servers — official butex.edu.bd notices (class routines, exam schedules, results, admission, department notices) and the NoteBot knowledge base (notes, books, lab reports, question banks, syllabus, TexGPT answers, study plans and recommendations). Use whenever the user mentions BUTEX, NoteBot, butex.edu.bd, a BUTEX level/term (e.g. L2-T1), a BUTEX subject (Math-I, YM-I, FM-I…) or department (yarn, fabric, wet process, apparel, TFD, TEM, TMDM, IPE, DCE, ESE), or asks for notes, lab reports, a study plan, or "is there a new notice / routine / result" in a BUTEX context.
+description: Help BUTEX (Bangladesh University of Textiles) students through two NoteBot MCP servers — the official butex.edu.bd website (notices, class routines, exam schedules, results, admission, plus departments, teachers and their research, offices, halls and programs) and the NoteBot knowledge base (notes, books, lab reports, question banks, syllabus, TexGPT answers, study plans and recommendations). Use whenever the user mentions BUTEX, NoteBot, butex.edu.bd, a BUTEX level/term (e.g. L2-T1), a BUTEX subject (Math-I, YM-I, FM-I…) or department (yarn, fabric, wet process, apparel, TFD, TEM, TMDM, IPE, DCE, ESE), or asks for notes, lab reports, a study plan, a BUTEX teacher, office or hall, or "is there a new notice / routine / result" in a BUTEX context.
 ---
 
-<!-- butex-notebot skill version: 1.1.1 -->
+<!-- butex-notebot skill version: 1.2.0 -->
 
 # BUTEX NoteBot
 
 Two MCP servers, one free key:
-- `butex` (`https://ai.butexnotebot.com/butex/mcp`): official BUTEX notices. Tools are named `butex_*`.
+- `butex` (`https://ai.butexnotebot.com/butex/mcp`): the BUTEX MCP: the official site (notices, departments, teachers, offices, halls). Tools are named `butex_*`.
 - `notebot` (`https://ai.butexnotebot.com/notebot/mcp`): the NoteBot knowledge base. Tools are named `notebot_*`.
 
 ## 0. Keep this skill current (run first, once per session)
@@ -48,6 +48,10 @@ https://www.butex.edu.bd/results-published/.
 | "Anything new?" / a category (admission, convocation, tender, career…) | `butex_latest_notices` |
 | Anything else, or a date range | `butex_search_notices` (`since`/`until` = YYYY-MM-DD) |
 | Details of one notice | `butex_read_notice` (id or URL) |
+| A department: head, degrees, seats, credits, faculty | `butex_department` (name or code: `WPE`, `yarn`, `TEM`, `physics`…) |
+| A teacher or official, or who works on a topic | `butex_faculty` (`name` / `topic` / `designation` / `department`; `detail: true` for the full profile) |
+| An office, hall, VC/registrar message, history, programs, forms | `butex_page` (name or www.butex.edu.bd URL) |
+| What BUTEX has, or how to contact the university | `butex_directory` |
 | Notes, books, hand notes for a topic | `notebot_search`, then `notebot_subject` (level + subject) |
 | What exists for a level | `notebot_browse` |
 | Lab reports | `notebot_lab_reports` |

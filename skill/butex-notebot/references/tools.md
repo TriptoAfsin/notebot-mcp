@@ -1,6 +1,6 @@
 # BUTEX NoteBot tool reference
 
-**Part 1: `butex` server (official notices).** Part 2 covers the `notebot` knowledge base.
+**Part 1: `butex` server (the BUTEX MCP: notices and the rest of the official site).** Part 2 covers the `notebot` knowledge base.
 
 All tools are read-only. Every listing line reads:
 `- [YYYY-MM-DD] Title` / `id N · Categories · K images/pdfs` / `URL`.
@@ -36,6 +36,35 @@ All tools are read-only. Every listing line reads:
 - Returns the title, publish time, attachment links, any body text, PDF text (up to 20k chars)
   and the scanned images.
 
+## butex_directory
+- `group` (optional): `About`, `Departments`, `Offices`, `Halls`, `Programs`, `Research`, `Students & services`
+- Lists every page from the site's own menu with its URL, the 10 affiliated colleges, and the
+  university's address, phone, email and admission helpline.
+
+## butex_department
+- `department` (required): name or code. `yarn`/`YE`, `fabric`/`FE`, `wet process`/`WPE`,
+  `dyes`/`DCE`, `environmental`/`ESE`, `materials`/`TME`, `apparel`/`AE`, `fashion`/`TFD`,
+  `TEM`, `IPE`, `HSS`, `machinery`/`TMDM`, `physics`, `chemistry`, `math`
+- `include`: `all` (default) | `overview` | `faculty`; `max_chars` 500–20000 (default 4000)
+- Returns the head, the page's own text (welcome, about, vision, mission, degrees with seats,
+  semesters and credits, labs) and every faculty card (designation, official email,
+  interests, courses).
+
+## butex_faculty
+- At least one of `name`, `topic` (research interest or course), `designation`
+  (`professor`, `lecturer`, `provost`…), `department` (department, office or hall)
+- `detail: true` returns the best match's full profile: highlights, education, publications,
+  Google Scholar / ORCID / LinkedIn links. `limit` 1–50 (default 15)
+- Covers ~40 department, office and hall pages. Only official `@butex.edu.bd` emails are
+  returned; personal addresses on the site are omitted.
+
+## butex_page
+- `page` (required): a name (`examination office`, `osmani hall`, `VC message`, `history`,
+  `downloadable forms`, `IQAC`, `TTCS`) or a www.butex.edu.bd URL; `max_chars` (default 6000)
+- Returns the page text, people listed and linked PDFs/forms. Some pages (admission,
+  programs, conferences, convocation) have no text of their own; the tool says so, and
+  the answer is in the notices instead.
+
 ## butex_categories, butex_status
 No arguments. `butex_status` reports upstream health, cache state, archive size and
 `latestSkillVersion`.
@@ -49,6 +78,8 @@ ChatGPT-compatible pair: `search(query)` returns JSON `{results:[{id,title,url}]
 - Programs: BSc in Textile Engineering, MSc in Textile Engineering, MBA in Textiles,
   PGD in Textile Industry Management, PhD, Executive Development Program,
   affiliated colleges (BUTEX-affiliated textile engineering colleges).
+- Faculties: Textile Engineering; Textile Management & Business Studies; Textile Chemical
+  Engineering; Fashion Design & Apparel Engineering; Science & Engineering.
 - Department short names on the site: DYE (yarn), DFE (fabric), DWPE (wet process),
   DAE (apparel), DTFD (fashion & design), DTEM (management), DTMDM (machinery),
   DIPE (industrial & production), DCE (dyes & chemical), DESE (environmental).

@@ -11,10 +11,12 @@ import { VERSION } from "../version";
 
 export type Resource = "butex" | "notebot" | "analytics";
 
-export const BUTEX_INSTRUCTIONS = `You are connected to the official notice board of BUTEX (Bangladesh University of Textiles, Tejgaon, Dhaka), served by BUTEX NoteBot.
+export const BUTEX_INSTRUCTIONS = `You are connected to the official website of BUTEX (Bangladesh University of Textiles, Tejgaon, Dhaka), served by BUTEX NoteBot: the notice board plus the site's pages on departments, teachers, offices, halls and programs.
 
 How to use these tools well:
-- Start with the narrowest tool: butex_schedules for class routines / exam routines / class start or completion dates; butex_results for published results; butex_department_notices for one department; butex_latest_notices for "what's new"; butex_search_notices for anything else.
+- Notices: start with the narrowest tool: butex_schedules for class routines / exam routines / class start or completion dates; butex_results for published results; butex_department_notices for one department; butex_latest_notices for "what's new"; butex_search_notices for anything else.
+- The university itself: butex_department for a department (head, degrees, seats, credits, faculty list); butex_faculty to find a teacher or official by name, research topic or designation (detail=true for a full profile); butex_page for offices, halls, the VC's or registrar's message, history, programs, forms; butex_directory for the list of everything and the university's contacts.
+- Teacher contact details: share only the official @butex.edu.bd emails and office numbers the tools return. Never guess an address.
 - Listings only contain titles. Most notice bodies are scanned images or PDFs, so when the user needs specifics (dates, times, rooms, fees, deadlines, eligibility) call butex_read_notice with the id and read the attached image/PDF text before answering.
 - Students write levels and terms many ways ("L2T1", "Level-2 Term-1", "2-1"). Pass them as tokens like "L-2 T-1"; matching ignores spaces and hyphens. Departments: yarn, fabric, wet_process, apparel, fashion_design, management, machinery, industrial_production, dyes_chemical, environmental.
 - Every listing states today's date in Asia/Dhaka. Compare notice dates to it and say plainly when the newest match is old ("the latest L-3 T-2 routine I found is from March 2025").
@@ -30,7 +32,7 @@ export const ANALYTICS_INSTRUCTIONS = `You are connected to the private analytic
 - Results flagged ⚠️ cached mean the analytics service was unreachable.`;
 
 const SERVER_INFO: Record<Resource, { name: string; title: string; instructions: () => string; register: (s: McpServer) => void }> = {
-  butex: { name: "butex-notebot", title: "BUTEX notices (NoteBot)", instructions: () => BUTEX_INSTRUCTIONS, register: registerButexTools },
+  butex: { name: "butex-notebot", title: "BUTEX MCP (NoteBot)", instructions: () => BUTEX_INSTRUCTIONS, register: registerButexTools },
   notebot: { name: "notebot-knowledge-base", title: "NoteBot knowledge base", instructions: () => NOTEBOT_INSTRUCTIONS, register: registerNotebotTools },
   analytics: { name: "notebot-analytics", title: "NoteBot Analytics", instructions: () => ANALYTICS_INSTRUCTIONS, register: registerAnalyticsTools },
 };

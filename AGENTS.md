@@ -15,6 +15,7 @@ The server sends these as MCP `instructions` on connect (source of truth: `BUTEX
 - **Levels and terms are tokens.** `L-2 T-1`, `L2T1` and `Level-2 Term-1` all match the same notices, because spacing and hyphens are ignored.
 - **Dates matter.** Every listing prints today's date in Asia/Dhaka. Say how old a notice is and flag stale matches.
 - **Cite the source.** Include the official notice link, and quote dates exactly as printed.
+- **Beyond notices:** `butex_department` (head, degrees, seats, faculty), `butex_faculty` (teachers by name, topic or designation; `detail` for a full profile), `butex_page` (offices, halls, VC/registrar message, forms), `butex_directory` (everything, plus contacts). Share only the official emails they return.
 - **⚠️ cached** means butex.edu.bd was unreachable, so the answer may lag. Say so.
 - **On error**, retry once with simpler arguments, then switch tools. `butex_status` explains outages.
 - NoteBot is a student project, not an official BUTEX service.
@@ -50,6 +51,8 @@ src/
   mcp/handler.ts      auth → rate limit → fresh McpServer per request; server instructions
   mcp/tooling.ts      guard() wrapper, READ_ONLY annotations, freshness line
   butex/client.ts     WordPress REST client, categories, attachments, offline corpus
+  butex/site.ts       site directory + HTML page parser (departments, faculty cards, offices, halls)
+  butex/site-tools.ts butex_department / butex_faculty / butex_page / butex_directory
   butex/reader.ts     PDF text (unpdf) + scanned images for the model
   butex/tools.ts      butex_* tools + ChatGPT search/fetch
   analytics/tools.ts  admin-only wrapper over notebot-analytics-go (+ mcp_signups)
@@ -75,7 +78,8 @@ skill/butex-notebot/  the agent skill (SKILL.md is the version source of truth)
 4b. **Every requesting email goes into `mcp.contacts`**, and unsubscribe is honoured. Don't use it for anything but NoteBot updates.
 5. **The OAuth server is stateless.** Client ids are signed blobs and auth codes are AES-GCM sealed. Don't add server-side session state.
 6. **Analytics is admin-only.** `handleMcp` returns 403 for anything but the admin tier.
-7. **Be polite to butex.edu.bd.** Keep the cache windows (10–30 min). Don't add per-request scraping.
+7. **Be polite to butex.edu.bd.** Keep the cache windows (notices 10–30 min, pages 12 h). The people index reads ~40 pages, 4 at a time, at most twice a day. Don't add per-request scraping.
+8. **Official contacts only.** Faculty and office pages sometimes list personal Gmail/Yahoo addresses; `site.ts` drops them and keeps `@butex.edu.bd` ones. Keep it that way.
 
 ### Commands
 

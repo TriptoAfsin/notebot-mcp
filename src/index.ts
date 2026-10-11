@@ -55,7 +55,7 @@ const dashboardData = {
   servers: [
     {
       id: "butex",
-      name: "BUTEX notices",
+      name: "BUTEX MCP",
       tools: toolDocs(registerButexTools, [
         { name: "search · fetch", title: "ChatGPT pair", description: "The search/fetch pair ChatGPT connectors and deep research look for, over the same notices." },
       ]),
@@ -196,7 +196,7 @@ async function route(req: Request, server: Bun.Server<undefined>): Promise<Respo
   if (path === "/robots.txt") return new Response("User-agent: *\nAllow: /\nDisallow: /oauth/\nDisallow: /api/\nDisallow: /keys/\n");
   if (path === "/llms.txt") {
     return new Response(
-      `# NoteBot MCP\n\nMCP servers for BUTEX (Bangladesh University of Textiles) students.\n\n- BUTEX notices: ${env.publicUrl}/butex/mcp\n- NoteBot knowledge base: ${env.publicUrl}/notebot/mcp\n- Streamable HTTP; OAuth or Bearer key. Free key: ${env.publicUrl}/#get-key\n- Agent skill: ${env.publicUrl}/skill/SKILL.md\n\n## BUTEX notices\n${BUTEX_INSTRUCTIONS}\n\n## NoteBot knowledge base\n${NOTEBOT_INSTRUCTIONS}\n`,
+      `# NoteBot MCP\n\nMCP servers for BUTEX (Bangladesh University of Textiles) students.\n\n- BUTEX MCP (official notices, departments, faculty, offices): ${env.publicUrl}/butex/mcp\n- NoteBot knowledge base: ${env.publicUrl}/notebot/mcp\n- Streamable HTTP; OAuth or Bearer key. Free key: ${env.publicUrl}/#get-key\n- Agent skill: ${env.publicUrl}/skill/SKILL.md\n\n## BUTEX MCP\n${BUTEX_INSTRUCTIONS}\n\n## NoteBot knowledge base\n${NOTEBOT_INSTRUCTIONS}\n`,
       { headers: { "content-type": "text/plain; charset=utf-8" } },
     );
   }

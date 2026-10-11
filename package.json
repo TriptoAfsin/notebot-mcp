@@ -1,6 +1,6 @@
 {
   "name": "notebot-mcp",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "MCP server for official BUTEX notices and NoteBot analytics, with a free API-key dashboard",
   "type": "module",
   "private": true,

@@ -85,6 +85,10 @@ for (const [name, args] of [
   ["butex_department_notices", { department: "apparel", limit: 3 }],
   ["butex_categories", {}],
   ["butex_status", {}],
+  ["butex_directory", { group: "Departments" }],
+  ["butex_department", { department: "WPE", max_chars: 800 }],
+  ["butex_faculty", { topic: "smart textiles", limit: 3 }],
+  ["butex_page", { page: "examination office", max_chars: 800 }],
 ] as const) {
   const r = await callTool(key, name, args as Record<string, unknown>);
   const t = toolText(r);
@@ -126,6 +130,12 @@ for (const [name, args] of [
 }
 const prompts = await rpc("/notebot/mcp", key, "prompts/list");
 check("notebot prompts", (prompts.body?.result?.prompts?.length ?? 0) >= 2);
+
+// Site pages: only official emails, and no fetching off the BUTEX host
+const dept = toolText(await callTool(key, "butex_department", { department: "wet process", include: "faculty" }));
+check("butex_department lists faculty with official emails only", /Faculty members \(\d+\)/.test(dept) && !/@(gmail|yahoo)\./i.test(dept), dept.split("\n")[0]);
+const offHost = toolText(await callTool(key, "butex_page", { page: "https://butex.edu.bd.example.com/x" }));
+check("butex_page refuses non-BUTEX hosts", /not a readable butex\.edu\.bd page/.test(offHost), offHost.slice(0, 80));
 
 const badArgs = await callTool(key, "butex_read_notice", { notice: "999999999" });
 check("bad id → graceful isError", badArgs.body?.result?.isError === true || !!badArgs.body?.error);

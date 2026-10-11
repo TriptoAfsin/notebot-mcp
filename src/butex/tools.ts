@@ -22,6 +22,8 @@ import {
   type Page,
 } from "./client";
 import { imageForModel, pdfText } from "./reader";
+import { peopleIndex } from "./site";
+import { registerButexSiteTools } from "./site-tools";
 import { SKILL_VERSION } from "../skill";
 
 const categoryEnum = z.enum(Object.keys(CATEGORY_SLUGS) as [CategoryKey, ...CategoryKey[]]);
@@ -284,6 +286,8 @@ export function registerButexTools(server: McpServer) {
     }, "Check the id/URL came from butex_* tools. You can always give the user the notice link directly."),
   );
 
+  registerButexSiteTools(server);
+
   server.registerTool(
     "butex_categories",
     {
@@ -379,4 +383,8 @@ export function startButexWarmer() {
   const tick = () => getCorpus().catch((err) => console.error("corpus warm failed:", errMsg(err)));
   setTimeout(tick, 5_000);
   setInterval(tick, 20 * 60_000);
+  // The people index reads ~40 unit pages; build it once off the request path, then twice a day.
+  const people = () => peopleIndex().catch((err) => console.error("people index warm failed:", errMsg(err)));
+  setTimeout(people, 30_000);
+  setInterval(people, 12 * 3600_000);
 }

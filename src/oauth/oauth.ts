@@ -29,7 +29,7 @@ export function protectedResourceMetadata(resource: Resource): Response {
     authorization_servers: [issuer()],
     scopes_supported: [resource],
     bearer_methods_supported: ["header"],
-    resource_name: { butex: "BUTEX notices", notebot: "NoteBot knowledge base", analytics: "NoteBot Analytics (private)" }[resource],
+    resource_name: { butex: "BUTEX MCP", notebot: "NoteBot knowledge base", analytics: "NoteBot Analytics (private)" }[resource],
     resource_documentation: env.publicUrl,
   });
 }

@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { extractAttachments } from "../src/butex/client";
+import { findDepartment, findLink, isSitePage, parsePage, searchPeople } from "../src/butex/site";
 import { cache } from "../src/lib/cache";
 import { seal, signBlob, unseal, verifyBlob } from "../src/lib/crypto";
 import { emailIsValid, mintKey, verifyKey } from "../src/lib/keys";
@@ -109,5 +110,47 @@ describe("key recovery", () => {
     expect(readRotateToken(t)).toBe("a@b.com");
     expect(readUnsubscribeToken(t)).toBeNull();
     expect(readRotateToken(seal({ e: "a@b.com", p: "rotate", x: Date.now() - 1 }))).toBeNull();
+  });
+});
+
+describe("BUTEX site pages", () => {
+  const html = `<html><title>DoWPE – BUTEX</title><div id="primary"><div class="entry-content">
+  <div class="azoom-text-details"><p><strong>Dr. A Head</strong><br />Head, Dept. of Wet Process Engineering<br />email: head.wpe@butex.edu.bd</p></div>
+  <h1 class="azoom-heading">Department of Wet Process Engineering</h1><p>Number of Seats: 80</p></div></div>
+  <div class="sidebar-area large-3 column"><aside class="widget"><h3>Departmental Updates</h3><ul><li>noise</li></ul></aside></div>
+  <ul><li><div class="team-member-article"><span class="team-member-i main-color">Assistant Professor</span><div class="member-b x">Jane Doe</div>
+  <div class="member-details"><h3>Jane Doe <span>Assistant Professor</span></h3><p>FIELD OF INTEREST:</p><p>Color physics</p><p>Smart textiles</p>
+  <p>CONTACT:</p><p>Email: jane@wpe.butex.edu.bd, jane.personal@gmail.com</p><a href="https://orcid.org/0000">ORCiD</a><a href="http://www.facebook.com">fb</a></div></div></li></ul>
+  <div id="footer">Quick Links</div></html>`;
+
+  test("parses head, faculty cards after the sidebar, and keeps only official emails", () => {
+    const p = parsePage(html, "https://www.butex.edu.bd/x/", "WPE");
+    expect(p.head).toEqual({ name: "Dr. A Head", role: "Head, Dept. of Wet Process Engineering", email: "head.wpe@butex.edu.bd" });
+    expect(p.text).toContain("Number of Seats: 80");
+    expect(p.text).not.toContain("Departmental Updates");
+    expect(p.people).toHaveLength(1);
+    const jane = p.people[0]!;
+    expect(jane).toMatchObject({ name: "Jane Doe", designation: "Assistant Professor", emails: ["jane@wpe.butex.edu.bd"], links: ["https://orcid.org/0000"] });
+    expect(jane.interests).toEqual(["Color physics", "Smart textiles"]);
+    expect(jane.profile).not.toContain("gmail");
+  });
+
+  test("resolves department codes and page names, and only fetches the BUTEX host", () => {
+    expect(findDepartment("WPE")?.label).toBe("Department of Wet Process Engineering");
+    expect(findDepartment("tem")?.label).toBe("Department of Textile Engineering Management");
+    expect(findLink("VC message")?.label).toBe("The Vice Chancellor");
+    expect(findLink("osmani hall")?.label).toBe("G. M. A. G. Osmani Hall");
+    expect(isSitePage("https://www.butex.edu.bd/registrar-office/")).toBe(true);
+    expect(isSitePage("https://butex.edu.bd.evil.com/")).toBe(false);
+    expect(isSitePage("http://www.butex.edu.bd/")).toBe(false);
+  });
+
+  test("topic search prefers people matching every word", () => {
+    const base = { designation: "", unit: "U", unitUrl: "", emails: [], courses: [], links: [], summary: "", profile: "" };
+    const people = [
+      { ...base, name: "A", interests: ["Smart textiles"] },
+      { ...base, name: "B", interests: ["Technical textiles"] },
+    ];
+    expect(searchPeople(people, { topic: "smart textiles" }).map((p) => p.name)).toEqual(["A"]);
   });
 });

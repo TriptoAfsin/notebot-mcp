@@ -19,16 +19,16 @@ type UseCaseGroup = { server: string; endpoint: string; blurb: string; cases: Us
 // Real scenarios only: each one maps to a tool that exists today.
 const USE_CASES: UseCaseGroup[] = [
   {
-    server: "BUTEX notices",
+    server: "BUTEX MCP",
     endpoint: "/butex/mcp",
-    blurb: "The official butex.edu.bd notice board, searchable in plain words. Scanned notices are opened and read, and every answer links the original.",
+    blurb: "The whole official butex.edu.bd site in plain words: notices (scans opened and read), departments, teachers, offices and halls. Every answer links the original.",
     cases: [
       { who: "Results day", ask: "Did the L4-T1 results come out?", get: "The matching result notices with their posting dates and official links." },
       { who: "Exam planning", ask: "When is the L2-T2 final exam routine?", get: "The newest exam schedule, with dates read from the scanned notice." },
       { who: "Term deadlines", ask: "When do BSc classes end and when is the entry form due?", get: "The class-completion notice with each date quoted as printed." },
-      { who: "Your department", ask: "Anything new from the Wet Process department?", get: "Recent notices for that department only." },
-      { who: "Morning check", ask: "What did BUTEX post this week?", get: "The latest notices, newest first, with how old each one is." },
-      { who: "Admission & fees", ask: "Find the MSc admission circular and its fee.", get: "The circular, opened so the fee and deadline come straight from it." },
+      { who: "Department", ask: "Tell me about the Wet Process department.", get: "Head and contact, degrees with seats and credits, and the faculty list." },
+      { who: "Find a teacher", ask: "Who at BUTEX works on smart textiles?", get: "Teachers across departments with that research interest, with official emails." },
+      { who: "Offices & halls", ask: "Who is the exam controller, and how do I reach them?", get: "The Examination Office page: officers, designations and official contacts." },
     ],
   },
   {
@@ -75,11 +75,11 @@ function clientTabs(butex: string, notebot: string): Tab[] {
       label: "Claude web & app",
       steps: [
         "Open claude.ai → Settings → Connectors → <b>Add custom connector</b>.",
-        "Add one connector per server: name it <b>BUTEX notices</b> or <b>NoteBot knowledge base</b>, and paste its URL below. Leave the OAuth fields empty.",
+        "Add one connector per server: name it <b>BUTEX MCP</b> or <b>NoteBot knowledge base</b>, and paste its URL below. Leave the OAuth fields empty.",
         "Click <b>Connect</b>. A NoteBot page opens; enter your email to approve.",
         "Connectors you add on the web also show up in the Claude desktop and mobile apps. Turn them on per chat from the tools menu.",
       ],
-      snippets: [["BUTEX notices URL", butex], ["NoteBot knowledge base URL", notebot]],
+      snippets: [["BUTEX MCP URL", butex], ["NoteBot knowledge base URL", notebot]],
     },
     {
       id: "chatgpt",
@@ -90,7 +90,7 @@ function clientTabs(butex: string, notebot: string): Tab[] {
         "Set Authentication to <b>OAuth</b>, tick that you trust the app, then create it. Approve with your email on the NoteBot page.",
         "Pick them from the <b>+</b> menu in a chat. They sync to the ChatGPT mobile and desktop apps.",
       ],
-      snippets: [["BUTEX notices URL", butex], ["NoteBot knowledge base URL", notebot]],
+      snippets: [["BUTEX MCP URL", butex], ["NoteBot knowledge base URL", notebot]],
     },
     {
       id: "code",
@@ -163,7 +163,7 @@ export function dashboardPage(d: DashboardData): Response {
     .map((srv) => `<div class="card"><h3 class="card__title">${esc(srv.name)}</h3><pre class="guidelines">${esc(srv.guidelines)}</pre></div>`)
     .join("");
 
-  const html = `${head("NoteBot MCP — BUTEX notices and study notes for your AI", "Free MCP servers for BUTEX students: official notices, routines and results, plus the NoteBot knowledge base of notes, lab reports and study plans. Works in Claude, ChatGPT, Claude Code and Cursor.")}
+  const html = `${head("NoteBot MCP — BUTEX info and study notes for your AI", "Free MCP servers for BUTEX students: official notices, routines, results, departments and faculty, plus the NoteBot knowledge base of notes, lab reports and study plans. Works in Claude, ChatGPT, Claude Code and Cursor.")}
 <body>
 <a class="skip" href="#main">Skip to content</a>
 <header class="bar" data-bar>
@@ -180,7 +180,7 @@ export function dashboardPage(d: DashboardData): Response {
   <div class="wrap work">
     <section class="work__intro rise" aria-labelledby="h1">
       <div class="title-row"><h1 id="h1">Your BUTEX study desk, inside your AI.</h1></div>
-      <p class="lede">Two MCP servers for Claude, ChatGPT and your editor. <b>BUTEX notices</b> reads the official notice board: routines, exam schedules, results. <b>NoteBot knowledge base</b> serves the notes, books, lab reports and question banks students share, and builds study plans from them.</p>
+      <p class="lede">Two MCP servers for Claude, ChatGPT and your editor. <b>BUTEX MCP</b> reads the official butex.edu.bd site: notices, routines, exam schedules, results, departments, teachers, offices and halls. <b>NoteBot knowledge base</b> serves the notes, books, lab reports and question banks students share, and builds study plans from them.</p>
       <ul class="facts">
         <li>Free. One key, which only needs an email, works on both servers.</li>
         <li>Works in Claude and ChatGPT on web, desktop and mobile, plus Claude Code, Cursor and VS Code.</li>
@@ -236,7 +236,7 @@ export function dashboardPage(d: DashboardData): Response {
 
   <section class="section" id="tools" aria-labelledby="tools-h">
     <div class="wrap">
-      <div class="section__head"><h2 id="tools-h">Tools</h2><p>Every tool is read-only. BUTEX notices reads butex.edu.bd's own data feed; NoteBot knowledge base reads the NoteBot engine. Results are cached so neither source gets hammered.</p></div>
+      <div class="section__head"><h2 id="tools-h">Tools</h2><p>Every tool is read-only. BUTEX MCP reads butex.edu.bd's own data feed and pages; NoteBot knowledge base reads the NoteBot engine. Results are cached so neither source gets hammered.</p></div>
       ${toolGroups}
     </div>
   </section>
