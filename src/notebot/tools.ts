@@ -3,6 +3,7 @@ import { z } from "zod";
 import { breakerStatus, type Cached } from "../lib/resilient";
 import { clamp } from "../lib/util";
 import { guard, READ_ONLY, text, todayDhaka } from "../mcp/tooling";
+import { NOTEBOT_LINKS } from "./links";
 import {
   archivedResults,
   engineUpstream,
@@ -338,6 +339,23 @@ Goal: ${goal.replace("_", " ")} · Time budget: ${budget} · Today: ${todayDhaka
   );
 
   server.registerTool(
+    "notebot_links",
+    {
+      title: "NoteBot links",
+      description:
+        "NoteBot's own links: the website, the Android app, the Messenger bot, the form to submit notes, and the status page. Use when the user asks where to find NoteBot, how to install the app, how to reach the bot, how to contribute notes, or whether NoteBot is down.",
+      inputSchema: {
+        which: z.enum(["all", "web", "app", "bot", "submit", "status"]).optional().describe("Default all."),
+      },
+      annotations: { title: "NoteBot links", ...READ_ONLY },
+    },
+    guard("notebot_links", async ({ which = "all" }) => {
+      const rows = NOTEBOT_LINKS.filter((l) => which === "all" || l.id === which);
+      return text(rows.map((l) => `- ${l.label}: ${l.url}\n  ${l.use}`).join("\n"));
+    }),
+  );
+
+  server.registerTool(
     "notebot_status",
     {
       title: "Service status",
@@ -351,6 +369,7 @@ Goal: ${goal.replace("_", " ")} · Time budget: ${budget} · Today: ${todayDhaka
           {
             engine: breakerStatus(engineUpstream),
             analytics: breakerStatus("notebot-analytics"),
+            statusPage: "https://status.butexnotebot.com/",
             today: todayDhaka(),
           },
           null,
@@ -416,5 +435,7 @@ How to help well:
 - For official notices, exam dates and new results, use the BUTEX server (butex_*) if it's connected; NoteBot's routines/results are an archive.
 - A ⚠️ line means the knowledge base was unreachable and you're seeing a cached copy.
 - If a tool errors, retry once with simpler arguments (just the level, a shorter query), then try notebot_search.
+- NoteBot's own links, when the user asks for them: website https://butexnotebot.com, Android app https://play.google.com/store/apps/details?id=com.hawkers.notebot, Messenger bot https://www.messenger.com/t/103148557940299, submit notes https://forms.gle/RjPXedjRDim4YE6P8, status page https://status.butexnotebot.com/ (notebot_links returns the same list). Share them on request; don't append them to every answer.
+- Someone has notes the library is missing? Point them to the submit form.
 - NoteBot is a student project, not an official BUTEX service.`;
 

@@ -3,7 +3,7 @@ name: butex-notebot
 description: Help BUTEX (Bangladesh University of Textiles) students through two NoteBot MCP servers — the official butex.edu.bd website (notices, class routines, exam schedules, results, admission, plus departments, teachers and their research, offices, halls and programs) and the NoteBot knowledge base (notes, books, lab reports, question banks, syllabus, study plans and recommendations). Use whenever the user mentions BUTEX, NoteBot, butex.edu.bd, a BUTEX level/term (e.g. L2-T1), a BUTEX subject (Math-I, YM-I, FM-I…) or department (yarn, fabric, wet process, apparel, TFD, TEM, TMDM, IPE, DCE, ESE), or asks for notes, lab reports, a study plan, a BUTEX teacher, office or hall, or "is there a new notice / routine / result" in a BUTEX context.
 ---
 
-<!-- butex-notebot skill version: 1.2.2 -->
+<!-- butex-notebot skill version: 1.2.3 -->
 
 # BUTEX NoteBot
 
@@ -59,6 +59,7 @@ https://www.butex.edu.bd/results-published/.
 | Explain a concept | Answer yourself, then `notebot_search` for the matching notes and books |
 | Study plan / exam prep | `notebot_study_plan` → you write the day-by-day plan; `notebot_recommend` for what's popular |
 | Syllabus | `notebot_syllabus` |
+| NoteBot website, app, Messenger bot, submitting notes, status page (only when asked) | `notebot_links` |
 
 Listings are titles only. **Before stating any date, time, room, fee, deadline or
 eligibility, call `butex_read_notice`** and read the attached scan or PDF text. Most notices

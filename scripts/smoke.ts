@@ -117,7 +117,7 @@ if (parsed.results?.[0]) {
 // ── NoteBot knowledge base server (same key)
 const nbList = await rpc("/notebot/mcp", key, "tools/list");
 const nbNames: string[] = nbList.body?.result?.tools?.map((t: any) => t.name) ?? [];
-check("notebot tools/list (same key)", nbNames.includes("notebot_study_plan") && !nbNames.includes("notebot_ask"), `${nbNames.length} tools`);
+check("notebot tools/list (same key)", nbNames.includes("notebot_study_plan") && nbNames.includes("notebot_links") && !nbNames.includes("notebot_ask"), `${nbNames.length} tools`);
 for (const [name, args] of [
   ["notebot_search", { query: "chemistry" }],
   ["notebot_browse", { level: 1 }],

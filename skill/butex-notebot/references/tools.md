@@ -122,5 +122,8 @@ All arguments that take `level` accept 1–4, "L2" or "Level 2". Subjects accept
 ## notebot_recommend
 - `level` (optional). Most-opened subjects and labs across NoteBot, mapped to levels.
 
+## notebot_links
+- `which` (all | web | app | bot | submit | status). NoteBot's website, Android app, Messenger bot, the submit-notes form and the status page. Share only when the user asks, or point to `submit` when they have notes the library lacks.
+
 ## Prompts
 `study-plan` (level, subjects, days) and `exam-sprint` (level, subject) for clients that support MCP prompts.

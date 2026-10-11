@@ -77,8 +77,9 @@ Every tool is read-only. Nothing here can change data on butex.edu.bd, in the No
 | Last-minute | "Exam tomorrow on Wet Process. What should I cover?" | An exam-sprint list of the key topics and questions |
 | Not sure what next | "What are Level 3 students studying most?" | The most-opened notes and labs |
 | Course planning | "What's in the Level 3 syllabus?" | The syllabus for that level and batch |
+| NoteBot itself | "Where do I download the NoteBot app?" / "How can I submit my notes?" | The app, website, Messenger bot, submit form or status page link |
 
-**Tools:** `notebot_search`, `notebot_browse`, `notebot_subject`, `notebot_lab_reports`, `notebot_question_banks`, `notebot_routines`, `notebot_syllabus`, `notebot_results_archive`, `notebot_study_plan`, `notebot_recommend`, `notebot_status`. Prompts: `study-plan`, `exam-sprint`.
+**Tools:** `notebot_search`, `notebot_browse`, `notebot_subject`, `notebot_lab_reports`, `notebot_question_banks`, `notebot_routines`, `notebot_syllabus`, `notebot_results_archive`, `notebot_study_plan`, `notebot_recommend`, `notebot_links`, `notebot_status`. Prompts: `study-plan`, `exam-sprint`.
 
 **Good to know:** official exam dates and new results come from the BUTEX MCP; NoteBot's routines and results are an archive. Add both servers and the AI uses each for what it's best at.
 
