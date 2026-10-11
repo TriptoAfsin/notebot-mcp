@@ -106,7 +106,7 @@ ${(["butex", "notebot"] as ServerId[]).map((id) => `<template id="tpl-${id}" dat
 
   return layout({
     title: "NoteBot MCP: BUTEX info and study notes in your AI",
-    description: "Free MCP servers for BUTEX students: official notices, routines, results, departments and faculty, plus the NoteBot knowledge base of notes, lab reports and study plans. Works in Claude, ChatGPT, Gemini, Antigravity, Claude Code and Cursor.",
+    description: "Free MCP servers for BUTEX students: official notices, routines, results, departments and faculty, plus NoteBot of notes, lab reports and study plans. Works in Claude, ChatGPT, Gemini, Antigravity, Claude Code and Cursor.",
     route: "home",
     body,
     extra: sheet,
@@ -174,7 +174,7 @@ export function askPage(): Response {
   </div>
 </section>
 <div class="wrap ask-wrap">${group("butex", 0)}${group("notebot", 1)}</div>`;
-  return layout({ title: "What you can ask · NoteBot MCP", description: "Real questions BUTEX students ask through the BUTEX MCP and the NoteBot knowledge base.", route: "ask", body });
+  return layout({ title: "What you can ask · NoteBot MCP", description: "Real questions BUTEX students ask through the BUTEX MCP and NoteBot.", route: "ask", body });
 }
 
 // ── /tools ──────────────────────────────────────────────────────────────────
@@ -191,10 +191,10 @@ export function toolsPage(d: DashboardData): Response {
     .join("");
   const body = `<section class="wrap page-head">
   <h1 class="rise">Tools</h1>
-  <p class="page-head__lede rise" style="--i:1">Every tool only reads. BUTEX MCP reads butex.edu.bd's own feed and pages; the NoteBot knowledge base reads the NoteBot engine. Results are cached so neither source gets hammered. The server instructions are also in <a href="https://github.com/TriptoAfsin/notebot-mcp/blob/main/AGENTS.md">AGENTS.md</a>.</p>
+  <p class="page-head__lede rise" style="--i:1">Every tool only reads. BUTEX MCP reads butex.edu.bd's own feed and pages; NoteBot reads the NoteBot engine. Results are cached so neither source gets hammered. The server instructions are also in <a href="https://github.com/TriptoAfsin/notebot-mcp/blob/main/AGENTS.md">AGENTS.md</a>.</p>
 </section>
 <div class="wrap">${groups}</div>`;
-  return layout({ title: "Tools · NoteBot MCP", description: "Every tool the BUTEX MCP and NoteBot knowledge base expose, and the instructions they give AI apps.", route: "tools", body });
+  return layout({ title: "Tools · NoteBot MCP", description: "Every tool the BUTEX MCP and NoteBot expose, and the instructions they give AI apps.", route: "tools", body });
 }
 
 // ── /agent: skill ───────────────────────────────────────────────────────────

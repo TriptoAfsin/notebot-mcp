@@ -176,7 +176,7 @@ export async function requestKey(opts: { email: string; ip: string; website?: st
     const msg = layout({
       title: "Your NoteBot MCP key",
       paragraphs: [
-        "Someone (hopefully you) asked for a NoteBot MCP key with this address. It already has one, so here it is again. It works on both servers: the BUTEX MCP and the NoteBot knowledge base.",
+        "Someone (hopefully you) asked for a NoteBot MCP key with this address. It already has one, so here it is again. It works on both servers: the BUTEX MCP and NoteBot.",
         `Step-by-step setup for Claude, ChatGPT, Gemini, Antigravity, Claude Code and Cursor: <a href="${env.publicUrl}/connect">${env.publicUrl}/connect</a>`,
       ],
       keys: existing.map((k) => keyFor(k.id, k.tier)),
@@ -202,7 +202,7 @@ export async function requestKey(opts: { email: string; ip: string; website?: st
     const msg = layout({
       title: "Welcome to NoteBot MCP",
       paragraphs: [
-        "Here's a copy of the key you just created. It works on both servers: <b>BUTEX MCP</b> (/butex/mcp) and the <b>NoteBot knowledge base</b> (/notebot/mcp).",
+        "Here's a copy of the key you just created. It works on both servers: <b>BUTEX MCP</b> (/butex/mcp) and <b>NoteBot</b> (/notebot/mcp).",
         `Step-by-step setup for Claude, ChatGPT, Gemini, Antigravity, Claude Code and Cursor: <a href="${env.publicUrl}/connect">${env.publicUrl}/connect</a>`,
       ],
       keys: [key],

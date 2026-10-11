@@ -62,7 +62,7 @@ const dashboardData = {
       ]),
       guidelines: BUTEX_INSTRUCTIONS,
     },
-    { id: "notebot", name: "NoteBot knowledge base", tools: toolDocs(registerNotebotTools), guidelines: NOTEBOT_INSTRUCTIONS },
+    { id: "notebot", name: "NoteBot", tools: toolDocs(registerNotebotTools), guidelines: NOTEBOT_INSTRUCTIONS },
   ],
   skillVersion: SKILL_VERSION,
 };
@@ -211,7 +211,7 @@ async function route(req: Request, server: Bun.Server<undefined>): Promise<Respo
   if (path === "/setup.md") return new Response(agentSetup(), { headers: { "content-type": "text/markdown; charset=utf-8" } });
   if (path === "/llms.txt") {
     return new Response(
-      `# NoteBot MCP\n\nMCP servers for BUTEX (Bangladesh University of Textiles) students.\n\n- BUTEX MCP (official notices, departments, faculty, offices): ${env.publicUrl}/butex/mcp\n- NoteBot knowledge base: ${env.publicUrl}/notebot/mcp\n- Streamable HTTP; OAuth or Bearer key. Free key: ${env.publicUrl}/key\n- Agent skill: ${env.publicUrl}/skill/SKILL.md\n- Agent setup steps: ${env.publicUrl}/setup.md\n\n## BUTEX MCP\n${BUTEX_INSTRUCTIONS}\n\n## NoteBot knowledge base\n${NOTEBOT_INSTRUCTIONS}\n`,
+      `# NoteBot MCP\n\nMCP servers for BUTEX (Bangladesh University of Textiles) students.\n\n- BUTEX MCP (official notices, departments, faculty, offices): ${env.publicUrl}/butex/mcp\n- NoteBot: ${env.publicUrl}/notebot/mcp\n- Streamable HTTP; OAuth or Bearer key. Free key: ${env.publicUrl}/key\n- Agent skill: ${env.publicUrl}/skill/SKILL.md\n- Agent setup steps: ${env.publicUrl}/setup.md\n\n## BUTEX MCP\n${BUTEX_INSTRUCTIONS}\n\n## NoteBot\n${NOTEBOT_INSTRUCTIONS}\n`,
       { headers: { "content-type": "text/plain; charset=utf-8" } },
     );
   }

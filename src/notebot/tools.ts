@@ -25,7 +25,7 @@ import {
 const level = z.union([z.number().int().min(1).max(4), z.string().max(12)]).describe("Level 1–4 (\"2\", \"L2\" and \"Level 2\" all work).");
 
 function source(c: { stale: boolean; warning?: string; fetchedAt: string }) {
-  return c.stale ? `⚠️ ${c.warning}` : `Source: NoteBot knowledge base (fetched ${c.fetchedAt}).`;
+  return c.stale ? `⚠️ ${c.warning}` : `Source: NoteBot (fetched ${c.fetchedAt}).`;
 }
 
 const link = (title: string, url: string) => `- ${title.replace(/^📌\s*/, "")}\n  ${url}`;
@@ -47,9 +47,9 @@ export function registerNotebotTools(server: McpServer) {
   server.registerTool(
     "notebot_search",
     {
-      title: "Search NoteBot knowledge base",
+      title: "Search NoteBot",
       description:
-        "Search the NoteBot knowledge base of BUTEX study material: lecture notes, books, hand notes, question papers and lab reports, contributed by students. Use for any 'notes for X', 'book for Y', 'lab report on Z' request.",
+        "Search NoteBot of BUTEX study material: lecture notes, books, hand notes, question papers and lab reports, contributed by students. Use for any 'notes for X', 'book for Y', 'lab report on Z' request.",
       inputSchema: {
         query: z.string().min(2).max(120).describe("Subject, topic or title words, e.g. 'ring spinning', 'chem 1 books', 'fabric manufacturing lab'."),
         limit: z.number().int().min(1).max(20).optional().describe("Default 10."),
@@ -60,7 +60,7 @@ export function registerNotebotTools(server: McpServer) {
       const r = await search(query, clamp(limit, 1, 20, 10));
       const hits = r.data.results;
       if (!hits.length) {
-        return text(`Nothing in the NoteBot knowledge base matched "${query}". Try fewer words, the subject short name (e.g. "ym1", "chem2"), or notebot_browse to list a level's subjects.\n\n${source(r)}`);
+        return text(`Nothing in NoteBot matched "${query}". Try fewer words, the subject short name (e.g. "ym1", "chem2"), or notebot_browse to list a level's subjects.\n\n${source(r)}`);
       }
       const lines = hits.map((h) => `- [${h.kind === "lab" ? "Lab" : "Note"} · L${h.level} · ${h.subject} › ${h.topic}] ${h.title}\n  ${h.url}`);
       return text(`NoteBot results for "${query}" (${hits.length}):\n\n${lines.join("\n")}\n\n${source(r)}`);
@@ -424,7 +424,7 @@ Goal: ${goal.replace("_", " ")} · Time budget: ${budget} · Today: ${todayDhaka
   );
 }
 
-export const NOTEBOT_INSTRUCTIONS = `You are connected to the BUTEX NoteBot knowledge base: student-contributed notes, books, previous questions, lab reports, routines and syllabi for Bangladesh University of Textiles.
+export const NOTEBOT_INSTRUCTIONS = `You are connected to NoteBot, the BUTEX study library: student-contributed notes, books, previous questions, lab reports, routines and syllabi for Bangladesh University of Textiles.
 
 How to help well:
 - Find material: notebot_search first for named topics; notebot_browse → notebot_subject to explore a level; notebot_lab_reports for labs; notebot_question_banks for previous questions.
@@ -433,7 +433,7 @@ How to help well:
 - Levels are 1–4. Subjects take names or short codes ("Math-I" = "math1", "Yarn Manufacturing I" = "ym1").
 - Always give the Google Drive links from the tools; never invent a resource or a link.
 - For official notices, exam dates and new results, use the BUTEX server (butex_*) if it's connected; NoteBot's routines/results are an archive.
-- A ⚠️ line means the knowledge base was unreachable and you're seeing a cached copy.
+- A ⚠️ line means NoteBot was unreachable and you're seeing a cached copy.
 - If a tool errors, retry once with simpler arguments (just the level, a shorter query), then try notebot_search.
 - NoteBot's own links, when the user asks for them: website https://butexnotebot.com, Android app https://play.google.com/store/apps/details?id=com.hawkers.notebot, Messenger bot https://www.messenger.com/t/103148557940299, submit notes https://forms.gle/RjPXedjRDim4YE6P8, status page https://status.butexnotebot.com/ (notebot_links returns the same list). Share them on request; don't append them to every answer.
 - Someone has notes the library is missing? Point them to the submit form.

@@ -5,7 +5,7 @@ Connect your AI assistant to two free servers for BUTEX students:
 | Server | URL | What it gives your AI |
 | --- | --- | --- |
 | **BUTEX MCP** | `https://ai.butexnotebot.com/butex/mcp` | The official butex.edu.bd site: notices (class routines, exam schedules, results, admission), plus departments, teachers, offices and halls. It reads the scanned notices for you. |
-| **NoteBot knowledge base** | `https://ai.butexnotebot.com/notebot/mcp` | Notes, books, lab reports, question banks and syllabus shared by students; study plans and recommendations. |
+| **NoteBot** | `https://ai.butexnotebot.com/notebot/mcp` | Notes, books, lab reports, question banks and syllabus shared by students; study plans and recommendations. |
 
 Add one or both. **One free key works on both.** Not sure what to ask? See [use-cases.md](use-cases.md).
 
@@ -18,7 +18,7 @@ No key needed: Claude signs you in.
 1. On **claude.ai**, open **Settings → Connectors → Add custom connector**.
 2. Name: `BUTEX MCP`. URL: `https://ai.butexnotebot.com/butex/mcp`. Leave the advanced/OAuth fields empty, then click **Add**.
 3. Click **Connect**. A NoteBot page opens. Enter your email and press **Allow**.
-4. Repeat with name `NoteBot knowledge base` and URL `https://ai.butexnotebot.com/notebot/mcp`.
+4. Repeat with name `NoteBot` and URL `https://ai.butexnotebot.com/notebot/mcp`.
 5. In a chat, open the tools menu (the slider icon) and turn the connectors on.
 
 Connectors added on the web appear automatically in the Claude **desktop** and **mobile** apps.
@@ -33,7 +33,7 @@ Custom MCP servers need a paid plan (Plus, Pro, Business, Enterprise or Edu). On
 2. Go to **chatgpt.com/plugins**, press **+**, then **Add custom MCP server**.
 3. Icon: download it from https://ai.butexnotebot.com/mcp-icon-butex.png (NoteBot: `/mcp-icon-notebot.png`). Name: `BUTEX MCP`. Description: `BUTEX notices, results, routines, departments and teachers from butex.edu.bd`. Under **Connection → Server URL**, paste `https://ai.butexnotebot.com/butex/mcp`. Authentication: **OAuth**. Accept the risk warning, then **Create as a plugin**. The connect section on the dashboard has copy buttons for all of these.
 4. Approve with your email on the NoteBot page that opens.
-5. Repeat for `NoteBot knowledge base` with `https://ai.butexnotebot.com/notebot/mcp` (description: `BUTEX notes, books, lab reports, question banks and study plans from NoteBot`).
+5. Repeat for `NoteBot` with `https://ai.butexnotebot.com/notebot/mcp` (description: `BUTEX notes, books, lab reports, question banks and study plans from NoteBot`).
 6. In a new chat, type **@** and pick the plugin.
 
 ChatGPT renamed these menus in 2026: the old **Apps & Connectors** page is now **Plugins**, and Developer mode moved to **Security and login**. If your menus look different, search Settings for "Developer mode" and look for Plugins or Connectors.

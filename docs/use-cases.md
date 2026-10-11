@@ -5,10 +5,10 @@ Three servers live at `https://ai.butexnotebot.com`. The first two are free for 
 | Server | Endpoint | Who |
 | --- | --- | --- |
 | BUTEX MCP | `/butex/mcp` | anyone (free key or sign-in) |
-| NoteBot knowledge base | `/notebot/mcp` | anyone (same key) |
+| NoteBot | `/notebot/mcp` | anyone (same key) |
 | NoteBot analytics | `/analytics/mcp` | owner only (admin key) |
 
-Every tool is read-only. Nothing here can change data on butex.edu.bd, in the NoteBot knowledge base or in analytics.
+Every tool is read-only. Nothing here can change data on butex.edu.bd, in NoteBot or in analytics.
 
 ---
 
@@ -54,7 +54,7 @@ Every tool is read-only. Nothing here can change data on butex.edu.bd, in the No
 
 ---
 
-## 2. NoteBot knowledge base — `/notebot/mcp`
+## 2. NoteBot — `/notebot/mcp`
 
 **What it reads:** the NoteBot engine (the same knowledge base behind the NoteBot app, website and Messenger bot): notes, books, lab reports, question banks, syllabus, saved routines and old results shared by BUTEX students.
 
