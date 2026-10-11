@@ -115,9 +115,6 @@ All arguments that take `level` accept 1–4, "L2" or "Level 2". Subjects accept
 ## notebot_results_archive
 - `query` (optional). Older result sheets saved in NoteBot. New results come from `butex_results`.
 
-## notebot_ask
-- `question`. TexGPT answer grounded in NoteBot's books and notes, plus source filenames. Takes 5–30 s.
-
 ## notebot_study_plan
 - `level`, `subjects[]` (optional, max 8), `goal` (final_exam | class_test | semester | lab_viva | revision), `days_left`, `hours_per_day`.
 - Returns a study kit (chapters, books, previous questions per subject, question banks, popularity rank) plus planning guidance. You write the plan.

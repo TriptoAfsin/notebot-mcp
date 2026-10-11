@@ -215,7 +215,7 @@ async function route(req: Request, server: Bun.Server<undefined>): Promise<Respo
 const server = Bun.serve({
   port: env.port,
   hostname: "0.0.0.0",
-  idleTimeout: 120, // notice reads can download a PDF + scans; TexGPT can take ~30s
+  idleTimeout: 120, // notice reads can download a PDF + scans
   maxRequestBodySize: 1024 * 1024,
   async fetch(req, srv) {
     try {

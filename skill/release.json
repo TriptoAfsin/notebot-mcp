@@ -1,3 +1,3 @@
 {
-  "notes": "The BUTEX MCP now covers the whole official site: departments (butex_department), teachers and officials (butex_faculty), any page (butex_page) and a directory (butex_directory)."
+  "notes": "TexGPT (notebot_ask) is no longer part of the NoteBot knowledge base server; explain concepts yourself and link the notes with notebot_search."
 }

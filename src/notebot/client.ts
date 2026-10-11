@@ -3,9 +3,9 @@ import { cachedFetch, fetchJson, type Cached } from "../lib/resilient";
 
 /**
  * Read-only client over notebot-engine-v2 (api.butexnotebot.com): the NoteBot
- * library of notes, lab reports, question banks, routines, syllabi and the
- * TexGPT RAG endpoint. Every read is cached and served stale when engine-v2 is
- * unreachable, same as the BUTEX client.
+ * knowledge base of notes, lab reports, question banks, routines and syllabi.
+ * Every read is cached and served stale when engine-v2 is unreachable, same as
+ * the BUTEX client. TexGPT is deliberately not exposed over MCP.
  */
 
 const UPSTREAM = "notebot-engine";
@@ -142,28 +142,6 @@ export async function search(q: string, limit = 10) {
   return get<{ results: SearchHit[] }>(`/app/search?q=${encodeURIComponent(q)}&limit=${limit}`, 900, { allow404: { results: [] } });
 }
 
-/** TexGPT: engine-v2's RAG answer over the NoteBot knowledge base. Not cached per user question beyond 1 day. */
-export async function texGpt(query: string): Promise<{ answer: string; sources: { title: string; url?: string }[] }> {
-  const { data } = await cachedFetch(`engine:texgpt:${query.toLowerCase().trim()}`, 24 * 3600, async () => {
-    const { data } = await fetchJson<{ success?: boolean; result?: { response?: string; data?: { filename?: string; attributes?: { url?: string } }[] } }>(
-      api("/app/tex-gpt"),
-      {
-        upstream: `${UPSTREAM}-texgpt`,
-        timeoutMs: 45_000,
-        retries: 1,
-        init: { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ query }) },
-      },
-    );
-    const answer = data.result?.response?.trim() ?? "";
-    if (!answer) throw new Error("TexGPT returned no answer");
-    const sources = (data.result?.data ?? [])
-      .map((d) => ({ title: d.filename ?? "source", url: d.attributes?.url }))
-      .filter((s, i, a) => a.findIndex((x) => x.title === s.title) === i)
-      .slice(0, 6);
-    return { answer, sources };
-  });
-  return data;
-}
 
 /** Public popularity counters from notebot-analytics-go, used for "what are other students studying". */
 export async function popularity(): Promise<{ notes: { sub_name: string; count: number }[]; labs: { lab_name: string; count: number }[] } | null> {

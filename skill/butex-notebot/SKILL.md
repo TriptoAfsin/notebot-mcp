@@ -1,9 +1,9 @@
 ---
 name: butex-notebot
-description: Help BUTEX (Bangladesh University of Textiles) students through two NoteBot MCP servers — the official butex.edu.bd website (notices, class routines, exam schedules, results, admission, plus departments, teachers and their research, offices, halls and programs) and the NoteBot knowledge base (notes, books, lab reports, question banks, syllabus, TexGPT answers, study plans and recommendations). Use whenever the user mentions BUTEX, NoteBot, butex.edu.bd, a BUTEX level/term (e.g. L2-T1), a BUTEX subject (Math-I, YM-I, FM-I…) or department (yarn, fabric, wet process, apparel, TFD, TEM, TMDM, IPE, DCE, ESE), or asks for notes, lab reports, a study plan, a BUTEX teacher, office or hall, or "is there a new notice / routine / result" in a BUTEX context.
+description: Help BUTEX (Bangladesh University of Textiles) students through two NoteBot MCP servers — the official butex.edu.bd website (notices, class routines, exam schedules, results, admission, plus departments, teachers and their research, offices, halls and programs) and the NoteBot knowledge base (notes, books, lab reports, question banks, syllabus, study plans and recommendations). Use whenever the user mentions BUTEX, NoteBot, butex.edu.bd, a BUTEX level/term (e.g. L2-T1), a BUTEX subject (Math-I, YM-I, FM-I…) or department (yarn, fabric, wet process, apparel, TFD, TEM, TMDM, IPE, DCE, ESE), or asks for notes, lab reports, a study plan, a BUTEX teacher, office or hall, or "is there a new notice / routine / result" in a BUTEX context.
 ---
 
-<!-- butex-notebot skill version: 1.2.0 -->
+<!-- butex-notebot skill version: 1.2.1 -->
 
 # BUTEX NoteBot
 
@@ -56,7 +56,7 @@ https://www.butex.edu.bd/results-published/.
 | What exists for a level | `notebot_browse` |
 | Lab reports | `notebot_lab_reports` |
 | Previous questions | `notebot_question_banks`, and the "questions"/"suggestion" topics in `notebot_subject` |
-| Explain a concept | `notebot_ask` (TexGPT, answers from the knowledge base with sources) |
+| Explain a concept | Answer yourself, then `notebot_search` for the matching notes and books |
 | Study plan / exam prep | `notebot_study_plan` → you write the day-by-day plan; `notebot_recommend` for what's popular |
 | Syllabus | `notebot_syllabus` |
 

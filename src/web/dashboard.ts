@@ -34,12 +34,12 @@ const USE_CASES: UseCaseGroup[] = [
   {
     server: "NoteBot knowledge base",
     endpoint: "/notebot/mcp",
-    blurb: "Notes, books, lab reports and previous questions shared by BUTEX students, plus TexGPT answers and study plans built from them.",
+    blurb: "Notes, books, lab reports and previous questions shared by BUTEX students, plus study plans built from them.",
     cases: [
       { who: "Find notes", ask: "YM-I notes for Level 2", get: "Topic-by-topic note links for the subject, plus its books." },
       { who: "Lab week", ask: "Lab reports for Phy-I", get: "Every lab report for that subject, with links." },
       { who: "Before finals", ask: "Previous questions for FM-I", get: "Question banks and suggestions shared for that subject." },
-      { who: "Concept check", ask: "Explain ring spinning", get: "A TexGPT answer drawn from NoteBot's books, with the source files named." },
+      { who: "Syllabus", ask: "What's in the Level 3 syllabus?", get: "The syllabus for that level and batch, with links." },
       { who: "Study plan", ask: "Finals in 10 days: YM-I and FM-I. Plan it.", get: "A day-by-day plan built from real topics, each day linked to its notes." },
       { who: "Not sure what next", ask: "What are Level 3 students studying most?", get: "The most-opened notes and labs, so you can follow what others use." },
     ],

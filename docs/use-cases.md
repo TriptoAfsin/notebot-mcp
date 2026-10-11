@@ -56,14 +56,13 @@ Every tool is read-only. Nothing here can change data on butex.edu.bd, in the No
 
 ## 2. NoteBot knowledge base — `/notebot/mcp`
 
-**What it reads:** the NoteBot engine (the same knowledge base behind the NoteBot app, website and Messenger bot): notes, books, lab reports, question banks, syllabus, saved routines and old results shared by BUTEX students, plus TexGPT.
+**What it reads:** the NoteBot engine (the same knowledge base behind the NoteBot app, website and Messenger bot): notes, books, lab reports, question banks, syllabus, saved routines and old results shared by BUTEX students.
 
 **What you get:**
 - Notes and books by level (1–4) and subject, topic by topic
 - Lab reports per subject
 - Previous questions and suggestions
 - Syllabus by batch
-- TexGPT answers to textile questions, drawn from NoteBot's books with the sources named
 - Study plans built from the real topics and links in the knowledge base
 - Recommendations from what other students open most
 
@@ -74,13 +73,12 @@ Every tool is read-only. Nothing here can change data on butex.edu.bd, in the No
 | Find notes | "YM-I notes for Level 2" | Topic-by-topic note links and the subject's books |
 | Lab week | "Lab reports for Phy-I" | Every lab report for that subject |
 | Before finals | "Previous questions for FM-I" | Question banks and suggestions for the subject |
-| Concept check | "Explain ring spinning" | A TexGPT answer with its source files |
 | Study plan | "Finals in 10 days: YM-I and FM-I. Plan it." | A day-by-day plan, each day linked to its notes |
 | Last-minute | "Exam tomorrow on Wet Process. What should I cover?" | An exam-sprint list of the key topics and questions |
 | Not sure what next | "What are Level 3 students studying most?" | The most-opened notes and labs |
 | Course planning | "What's in the Level 3 syllabus?" | The syllabus for that level and batch |
 
-**Tools:** `notebot_search`, `notebot_browse`, `notebot_subject`, `notebot_lab_reports`, `notebot_question_banks`, `notebot_routines`, `notebot_syllabus`, `notebot_results_archive`, `notebot_ask`, `notebot_study_plan`, `notebot_recommend`, `notebot_status`. Prompts: `study-plan`, `exam-sprint`.
+**Tools:** `notebot_search`, `notebot_browse`, `notebot_subject`, `notebot_lab_reports`, `notebot_question_banks`, `notebot_routines`, `notebot_syllabus`, `notebot_results_archive`, `notebot_study_plan`, `notebot_recommend`, `notebot_status`. Prompts: `study-plan`, `exam-sprint`.
 
 **Good to know:** official exam dates and new results come from the BUTEX MCP; NoteBot's routines and results are an archive. Add both servers and the AI uses each for what it's best at.
 

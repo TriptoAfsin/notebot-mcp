@@ -33,7 +33,7 @@ export const env = {
   /** Count public MCP tool calls as platform "ai" in NoteBot analytics (needs ANALYTICS_ADMIN_KEY). */
   reportAiUsage: (e.REPORT_AI_USAGE ?? "true") !== "false",
 
-  /** notebot-engine-v2: notes, labs, q-banks, routines, syllabus, TexGPT. */
+  /** notebot-engine-v2: notes, labs, q-banks, routines, syllabus. */
   engineUrl: (e.ENGINE_API_URL ?? "https://api.butexnotebot.com").replace(/\/+$/, ""),
 
   /** Resend, for emailing existing keys back to their owner. Without it, recovery says "try later". */

@@ -25,7 +25,7 @@ The server sends these as MCP `instructions` on connect (source of truth: `BUTEX
 Source of truth: `NOTEBOT_INSTRUCTIONS` in `src/notebot/tools.ts`.
 
 - **Find material:** use `notebot_search` for named topics. To explore a level, go `notebot_browse` → `notebot_subject`. Use `notebot_lab_reports` for labs and `notebot_question_banks` for previous questions.
-- **Explain concepts:** `notebot_ask` (TexGPT). Cite the knowledge-base sources it returns, and point to matching notes.
+- **Explain concepts:** answer from the model, then point to matching notes with `notebot_search`. TexGPT is intentionally not exposed over MCP.
 - **Plan studying:** `notebot_study_plan` gathers the material; the agent writes a realistic day-by-day plan with exact links. `notebot_recommend` gives what's popular.
 - Levels are 1–4. Subjects take names or codes (`Math-I` = `math1`). Never invent links.
 - Official notices, exam dates and new results come from the `butex` server. NoteBot's routines and results are an archive.
@@ -57,7 +57,7 @@ src/
   butex/tools.ts      butex_* tools + ChatGPT search/fetch
   analytics/tools.ts  admin-only wrapper over notebot-analytics-go (+ mcp_signups)
   analytics/usage.ts  buffers public tool calls → analytics-go daily_report platform "ai"
-  notebot/client.ts   notebot-engine-v2 client (levels→subjects→topics→notes, labs, QB, TexGPT)
+  notebot/client.ts   notebot-engine-v2 client (levels→subjects→topics→notes, labs, QB)
   notebot/tools.ts    notebot_* tools + study-plan / exam-sprint prompts
   oauth/oauth.ts      stateless OAuth 2.1 (DCR + PKCE) for Claude.ai / ChatGPT connectors
   lib/                cache (Redis → memory), resilient fetch, keys, crypto, db, mail (Resend)
