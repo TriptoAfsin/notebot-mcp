@@ -13,6 +13,57 @@ function snippet(id: string, label: string, body: string) {
 </div>`;
 }
 
+type UseCase = { who: string; ask: string; get: string };
+type UseCaseGroup = { server: string; endpoint: string; blurb: string; cases: UseCase[] };
+
+// Real scenarios only: each one maps to a tool that exists today.
+const USE_CASES: UseCaseGroup[] = [
+  {
+    server: "BUTEX notices",
+    endpoint: "/butex/mcp",
+    blurb: "The official butex.edu.bd notice board, searchable in plain words. Scanned notices are opened and read, and every answer links the original.",
+    cases: [
+      { who: "Results day", ask: "Did the L4-T1 results come out?", get: "The matching result notices with their posting dates and official links." },
+      { who: "Exam planning", ask: "When is the L2-T2 final exam routine?", get: "The newest exam schedule, with dates read from the scanned notice." },
+      { who: "Term deadlines", ask: "When do BSc classes end and when is the entry form due?", get: "The class-completion notice with each date quoted as printed." },
+      { who: "Your department", ask: "Anything new from the Wet Process department?", get: "Recent notices for that department only." },
+      { who: "Morning check", ask: "What did BUTEX post this week?", get: "The latest notices, newest first, with how old each one is." },
+      { who: "Admission & fees", ask: "Find the MSc admission circular and its fee.", get: "The circular, opened so the fee and deadline come straight from it." },
+    ],
+  },
+  {
+    server: "NoteBot library",
+    endpoint: "/notebot/mcp",
+    blurb: "Notes, books, lab reports and previous questions shared by BUTEX students, plus TexGPT answers and study plans built from them.",
+    cases: [
+      { who: "Find notes", ask: "YM-I notes for Level 2", get: "Topic-by-topic note links for the subject, plus its books." },
+      { who: "Lab week", ask: "Lab reports for Phy-I", get: "Every lab report for that subject, with links." },
+      { who: "Before finals", ask: "Previous questions for FM-I", get: "Question banks and suggestions shared for that subject." },
+      { who: "Concept check", ask: "Explain ring spinning", get: "A TexGPT answer drawn from NoteBot's books, with the source files named." },
+      { who: "Study plan", ask: "Finals in 10 days: YM-I and FM-I. Plan it.", get: "A day-by-day plan built from real topics, each day linked to its notes." },
+      { who: "Not sure what next", ask: "What are Level 3 students studying most?", get: "The most-opened notes and labs, so you can follow what others use." },
+    ],
+  },
+];
+
+function useCasesSection() {
+  const groups = USE_CASES.map(
+    (g) => `<div class="tool-group">
+  <h3>${esc(g.server)} <code class="endpoint-tag">${esc(g.endpoint)}</code></h3>
+  <p class="uc-blurb">${esc(g.blurb)}</p>
+  <ul class="uc">${g.cases
+    .map((c) => `<li><span class="label">${esc(c.who)}</span><p class="uc-ask">&ldquo;${esc(c.ask)}&rdquo;</p><p class="uc-get">${esc(c.get)}</p></li>`)
+    .join("")}</ul>
+</div>`,
+  ).join("");
+  return `<section class="section" id="use-cases" aria-labelledby="uc-h">
+    <div class="wrap">
+      <div class="section__head"><h2 id="uc-h">What you can ask</h2><p>Type these as you would to a senior. The AI picks the right tool, and the answer always links to the source. More in the <a href="https://github.com/TriptoAfsin/notebot-mcp/blob/main/docs/use-cases.md">use-case guide</a>.</p></div>
+      ${groups}
+    </div>
+  </section>`;
+}
+
 type Tab = { id: string; label: string; steps: string[]; snippets: [string, string][] };
 
 function clientTabs(butex: string, notebot: string): Tab[] {
@@ -119,7 +170,7 @@ export function dashboardPage(d: DashboardData): Response {
   <div class="wrap bar__inner">
     ${brand}
     <nav aria-label="Sections">
-      <a href="#connect">Connect</a><a href="#tools">Tools</a><a href="#skill">Skill</a><a href="#guidelines">Guidelines</a><a href="#manage">Your key</a>
+      <a href="#use-cases">Use cases</a><a href="#connect">Connect</a><a href="#tools">Tools</a><a href="#skill">Skill</a><a href="#guidelines">Guidelines</a><a href="#manage">Your key</a>
     </nav>
     <button class="icon-btn" type="button" data-theme-toggle aria-label="Toggle dark mode">${ICON.sun}${ICON.moon}</button>
   </div>
@@ -172,6 +223,8 @@ export function dashboardPage(d: DashboardData): Response {
       </div>
     </section>
   </div>
+
+  ${useCasesSection()}
 
   <section class="section" id="connect" aria-labelledby="connect-h">
     <div class="wrap">

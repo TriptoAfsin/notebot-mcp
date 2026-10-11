@@ -13,7 +13,7 @@ Works in **Claude** (web, desktop, mobile: custom connector over OAuth), **ChatG
 
 Built to keep working when things break: per-upstream circuit breakers, retries with backoff, stale-cache fallback, a warm offline archive for search, Redis falling back to memory, and HMAC-signed keys that validate even with Postgres down. Every tool returns a readable error instead of throwing.
 
-User setup: [docs/setup-guide.md](docs/setup-guide.md). Public tool calls are reported to NoteBot analytics as platform `ai`. Every email that requests a key is kept in `mcp.contacts` (unsubscribe honoured; export at `/api/admin/contacts.csv` with `X-Admin-Key`).
+User setup: [docs/setup-guide.md](docs/setup-guide.md). What each server can do, with use cases: [docs/use-cases.md](docs/use-cases.md). Owner setup for the analytics server: [docs/analytics-setup.md](docs/analytics-setup.md). Public tool calls are reported to NoteBot analytics as platform `ai`. Every email that requests a key is kept in `mcp.contacts` (unsubscribe honoured; export at `/api/admin/contacts.csv` with `X-Admin-Key`).
 
 See [AGENTS.md](AGENTS.md) for architecture and invariants, [design.md](design.md) for UI rules, and [docs/butex-site-audit.md](docs/butex-site-audit.md) for what the BUTEX site does and doesn't provide.
 

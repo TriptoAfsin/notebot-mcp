@@ -7,7 +7,7 @@ Connect your AI assistant to two free servers for BUTEX students:
 | **BUTEX notices** | `https://ai.butexnotebot.com/butex/mcp` | Official butex.edu.bd notices: class routines, exam schedules, results, admission, department notices. It reads the scanned notices for you. |
 | **NoteBot library** | `https://ai.butexnotebot.com/notebot/mcp` | Notes, books, lab reports, question banks and syllabus shared by students; TexGPT answers; study plans and recommendations. |
 
-Add one or both. **One free key works on both.**
+Add one or both. **One free key works on both.** Not sure what to ask? See [use-cases.md](use-cases.md).
 
 ---
 

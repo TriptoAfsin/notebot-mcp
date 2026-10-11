@@ -31,7 +31,7 @@ Source of truth: `NOTEBOT_INSTRUCTIONS` in `src/notebot/tools.ts`.
 
 ### `analytics` — `https://ai.butexnotebot.com/analytics/mcp` (owner only)
 
-Accepts only the admin key, or an admin-tier OAuth token issued against it. Start with `analytics_overview`. `mcp_signups` shows who requested keys. The `analytics_users`, `analytics_find_users` and `analytics_error_logs` tools return personal data, so summarise them and show individual emails only when asked.
+Accepts only the admin key, or an admin-tier OAuth token issued against it. Owner setup: `docs/analytics-setup.md`. Start with `analytics_overview`. `mcp_signups` shows who requested keys. The `analytics_users`, `analytics_find_users` and `analytics_error_logs` tools return personal data, so summarise them and show individual emails only when asked.
 
 ### Skill
 

@@ -51,7 +51,7 @@ export function registerAnalyticsTools(server: McpServer) {
     "analytics_overview",
     {
       title: "NoteBot analytics overview",
-      description: "One-shot snapshot: platform usage KPIs (bot vs app), top 5 note subjects and top 5 lab subjects. Partial results are returned if one source fails.",
+      description: "One-shot snapshot: platform usage KPIs (Messenger bot, app and AI/MCP), top 5 note subjects and top 5 lab subjects. Partial results are returned if one source fails.",
       inputSchema: {},
       annotations: { title: "Analytics overview", ...READ_ONLY },
     },
@@ -67,9 +67,9 @@ export function registerAnalyticsTools(server: McpServer) {
     "analytics_daily_usage",
     {
       title: "Daily usage report",
-      description: "Per-day request counts for the Messenger bot and the app, newest first, with optional platform and date filters.",
+      description: "Per-day request counts for the Messenger bot, the app and AI (MCP tool calls), newest first, with optional platform and date filters.",
       inputSchema: {
-        platform: z.enum(["bot", "app"]).optional(),
+        platform: z.enum(["bot", "app", "ai"]).optional(),
         start_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
         end_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
         page,
@@ -117,7 +117,7 @@ export function registerAnalyticsTools(server: McpServer) {
       annotations: { title: "Game leaderboard", ...READ_ONLY },
     },
     guard("analytics_game_leaderboard", async (a) =>
-      out(`${a.game} leaderboard`, await get(`/games/${a.game}`, { search: a.search, page: a.page, limit: clamp(a.limit, 1, 100, 20) })),
+      out(`${a.game} leaderboard`, await get(`/games/${a.game}`, { search: a.search, page: a.page, limit: clamp(a.limit, 1, 100, 20) }, true)),
     ),
   );
 
@@ -130,7 +130,7 @@ export function registerAnalyticsTools(server: McpServer) {
       annotations: { title: "App users", ...READ_ONLY },
     },
     guard("analytics_users", async (a) =>
-      out("App users", await get("/users/app", { search: a.search, page: a.page, limit: clamp(a.limit, 1, 500, 50) })),
+      out("App users", await get("/users/app", { search: a.search, page: a.page, limit: clamp(a.limit, 1, 500, 50) }, true)),
     ),
   );
 
