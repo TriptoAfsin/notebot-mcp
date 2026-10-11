@@ -1,5 +1,6 @@
 import { env } from "../env";
 import { errMsg } from "./util";
+import { log } from "./log";
 
 /**
  * Transactional email via Resend (same account and verified sender as the
@@ -29,10 +30,10 @@ export async function sendMail(m: { to: string; subject: string; html: string; t
       });
       if (res.ok) return true;
       const body = await res.text().catch(() => "");
-      console.error(`resend ${res.status}: ${body.slice(0, 300)}`);
+      log.error("email send failed", { event: "email", status: res.status, body: body.slice(0, 300), tags: m.tags });
       if (res.status < 500 && res.status !== 429) return false;
     } catch (err) {
-      console.error("resend failed:", errMsg(err));
+      log.error("email send failed", { event: "email", err, tags: m.tags });
     }
   }
   return false;

@@ -48,6 +48,17 @@ BASE=http://localhost:8080 ADMIN_API_KEY=<yours> bun run smoke
 3. **Networking → Custom domain → `ai.butexnotebot.com`**, then add the CNAME Railway shows in Cloudflare (DNS-only/grey cloud is simplest; proxied also works).
 4. Check `https://ai.butexnotebot.com/health` (`database: ok`, `email: configured`), then add the connectors in Claude or ChatGPT with `/butex/mcp` and `/notebot/mcp`.
 
+## Logs
+
+Every line is JSON on Railway, so you can filter in the Logs tab:
+
+- `@event:request`: one line per request (method, path without query, status, ms, request id). MCP requests add `resource`, `rpc`, `tools`, `client`, `keyId` and `tier`.
+- `@event:tool`: each tool call with duration, `ok` and its arguments.
+- `@event:key` / `@event:oauth`: keys created, emailed, rotated, revoked; connector sign-ins, denials and OAuth errors.
+- `@level:error`: anything that broke. Responses carry `x-request-id`; search `@reqId:<id>` to see one request end to end.
+
+Keys and tokens are never logged (only an 8-character key id), and emails are masked (`te***@example.com`). Set `LOG_LEVEL=debug` to include health checks and static files.
+
 ## Skill
 
 `skill/butex-notebot/` is served at `/skill/*`, with `install.sh`, `install.ps1` and a zip for claude.ai. It self-updates from `/skill/version.json`. Bump the version comment in its `SKILL.md` to release.

@@ -1,5 +1,5 @@
 import { env } from "../env";
-import { VERSION } from "../version";
+import { ASSET_VERSION, VERSION } from "../version";
 import { brand, copyBtn, esc, head, ICON } from "./pages";
 
 export type ToolDoc = { name: string; title: string; description: string };
@@ -110,7 +110,7 @@ function useCasesSection() {
   </section>`;
 }
 
-type Tab = { id: string; label: string; steps: string[]; snippets: [string, string][]; cards?: boolean };
+type Tab = { id: string; label: string; steps: string[]; snippets: [string, string][]; cards?: boolean; help?: { title: string; items: string[] } };
 
 /** What to type into a client's "add custom MCP server / connector" form, per server. */
 const PLUGIN_INFO = [
@@ -125,12 +125,16 @@ function copyField(id: string, label: string, value: string) {
 function pluginCards(tab: string) {
   return PLUGIN_INFO.map(
     (p) => `<div class="pcard">
-    <div class="pcard__head"><img src="${p.icon}" width="48" height="48" alt="">
-      <b>${esc(p.name)}</b>
-      <a class="btn btn--sm" href="${p.icon}" download="${p.id}-mcp-icon.png">${ICON.download}<span class="btn__label">Icon PNG</span></a></div>
-    ${copyField(`pf-${tab}-${p.id}-name`, "Name", p.name)}
-    ${copyField(`pf-${tab}-${p.id}-desc`, "Description", p.description)}
-    ${copyField(`pf-${tab}-${p.id}-url`, "Server URL", `${env.publicUrl}/${p.id}/mcp`)}
+    <div class="pcard__head">
+      <img class="pcard__icon" src="${p.icon}" width="40" height="40" alt="">
+      <div class="pcard__title"><b>${esc(p.name)}</b><span>/${esc(p.id)}/mcp</span></div>
+      <a class="btn btn--sm btn--quiet" href="${p.icon}" download="${p.id}-mcp-icon.png" aria-label="Download ${esc(p.name)} icon (PNG)">${ICON.download}<span class="btn__label">Icon</span></a>
+    </div>
+    <div class="pcard__fields">
+      ${copyField(`pf-${tab}-${p.id}-name`, "Name", p.name)}
+      ${copyField(`pf-${tab}-${p.id}-desc`, "Description", p.description)}
+      ${copyField(`pf-${tab}-${p.id}-url`, "Server URL", `${env.publicUrl}/${p.id}/mcp`)}
+    </div>
   </div>`,
   ).join("");
 }
@@ -162,6 +166,16 @@ function clientTabs(butex: string, notebot: string): Tab[] {
       ],
       snippets: [],
       cards: true,
+      help: {
+        title: "ChatGPT says it can't find the BUTEX MCP tools?",
+        items: [
+          "Open <b>chatgpt.com/plugins</b> and click the plugin. If it says <b>Connect</b> or <b>Sign in</b>, finish the NoteBot email step: without it ChatGPT gets no tools.",
+          "On the same page, check its tools are switched <b>on</b>, then press <b>Refresh</b>.",
+          "Start a <b>new chat</b>. A chat opened before the plugin was ready won't see it.",
+          "Pick it with <b>@</b> (or + → Developer mode) and ask directly, e.g. <q>Use BUTEX MCP: what are the latest notices?</q>",
+          "Still nothing? Delete the plugin and add it again. Custom plugins only work on chatgpt.com in a browser, not the mobile app.",
+        ],
+      },
     },
     {
       id: "code",
@@ -220,6 +234,7 @@ export function dashboardPage(d: DashboardData): Response {
     <ol class="steps steps--check">${t.steps
       .map((s, j) => `<li><button class="tick" type="button" aria-pressed="false" data-step="${j}" aria-label="Mark step ${j + 1} done">${ICON.check}</button><span>${s}</span></li>`)
       .join("")}</ol>
+    ${t.help ? `<details class="help"><summary>${esc(t.help.title)}</summary><ol>${t.help.items.map((x) => `<li>${x}</li>`).join("")}</ol></details>` : ""}
     <p class="done-note" data-done hidden>All set. Open a new chat and ask something like <q>Any new notice from BUTEX?</q> or <q>YM-I notes for Level 2</q>.</p>
   </div>
   <div class="snippet-wrap">${t.cards ? pluginCards(t.id) : ""}${t.snippets.map(([label, body], j) => snippet(`snip-${t.id}-${j}`, label, body)).join("")}</div>
@@ -372,7 +387,7 @@ export function dashboardPage(d: DashboardData): Response {
     <a href="/health">Status</a>
   </div>
 </footer>
-<script src="/app.js?v=${VERSION}" defer></script>
+<script src="/app.js?v=${ASSET_VERSION}" defer></script>
 </body>
 </html>`;
   return new Response(html, { headers: { "content-type": "text/html; charset=utf-8", "cache-control": "public, max-age=300" } });
@@ -387,7 +402,7 @@ export function messagePage(o: { title: string; body: string; key?: string; form
   const html = `${head(`${o.title} · NoteBot MCP`, o.title)}
 <body>
 <main class="consent"><div class="card rise">${brand}<h1>${esc(o.title)}</h1><p>${esc(o.body)}</p>${key}${form}<p class="fine"><a href="/">Back to the dashboard</a></p></div></main>
-<script src="/app.js?v=${VERSION}" defer></script>
+<script src="/app.js?v=${ASSET_VERSION}" defer></script>
 </body></html>`;
   return new Response(html, {
     status,

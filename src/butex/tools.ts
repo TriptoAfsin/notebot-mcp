@@ -25,6 +25,7 @@ import { imageForModel, pdfText } from "./reader";
 import { peopleIndex } from "./site";
 import { registerButexSiteTools } from "./site-tools";
 import { SKILL_VERSION } from "../skill";
+import { log } from "../lib/log";
 
 const categoryEnum = z.enum(Object.keys(CATEGORY_SLUGS) as [CategoryKey, ...CategoryKey[]]);
 const departmentEnum = z.enum(Object.keys(DEPARTMENT_SLUGS) as [DepartmentKey, ...DepartmentKey[]]);
@@ -380,11 +381,11 @@ export function registerButexTools(server: McpServer) {
 
 /** Keep the offline archive warm so search survives a site outage. */
 export function startButexWarmer() {
-  const tick = () => getCorpus().catch((err) => console.error("corpus warm failed:", errMsg(err)));
+  const tick = () => getCorpus().then(() => log.debug("notice corpus warmed", { event: "warm" })).catch((err) => log.warn("notice corpus warm failed", { event: "warm", err }));
   setTimeout(tick, 5_000);
   setInterval(tick, 20 * 60_000);
   // The people index reads ~40 unit pages; build it once off the request path, then twice a day.
-  const people = () => peopleIndex().catch((err) => console.error("people index warm failed:", errMsg(err)));
+  const people = () => peopleIndex().then((r) => log.info("people index warmed", { event: "warm", people: r.data.length, stale: r.stale })).catch((err) => log.warn("people index warm failed", { event: "warm", err }));
   setTimeout(people, 30_000);
   setInterval(people, 12 * 3600_000);
 }

@@ -49,5 +49,6 @@ export const env = {
 };
 
 if (env.isProd && env.usingDevSecret) {
-  console.warn("⚠️  KEY_SIGNING_SECRET is not set — keys are signed with a public dev secret. Set it in Railway.");
+  process.stderr.write(`${JSON.stringify({ time: new Date().toISOString(), level: "warn", message: "KEY_SIGNING_SECRET is not set: keys are signed with a public dev secret. Set it in Railway.", event: "config" })}
+`);
 }

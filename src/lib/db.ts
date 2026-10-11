@@ -1,6 +1,7 @@
 import { SQL } from "bun";
 import { env } from "../env";
 import { errMsg, withTimeout } from "./util";
+import { log } from "./log";
 
 /**
  * Postgres is only used for key bookkeeping (who holds which key, revocations,
@@ -55,7 +56,7 @@ function init(): Promise<boolean> {
         return true;
       } catch (err) {
         lastError = errMsg(err);
-        console.error("db init failed:", lastError);
+        log.error("db init failed", { event: "db", err: lastError });
         sql = null;
         // retry on the next call after a pause instead of caching the failure forever
         setTimeout(() => (ready = null), 30_000);
@@ -73,7 +74,7 @@ export async function db<T>(fn: (sql: SQL) => Promise<T>, timeoutMs = 3000): Pro
     return await withTimeout(fn(sql), timeoutMs, "db");
   } catch (err) {
     lastError = errMsg(err);
-    console.error("db query failed:", lastError);
+    log.error("db query failed", { event: "db", err: lastError });
     return null;
   }
 }

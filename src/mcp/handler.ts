@@ -7,6 +7,7 @@ import { reportAiUsage } from "../analytics/usage";
 import { env } from "../env";
 import { rateLimit, touchKey, verifyKey, type KeyInfo } from "../lib/keys";
 import { errMsg, json } from "../lib/util";
+import { annotate, keyRef, log } from "../lib/log";
 import { VERSION } from "../version";
 
 export type Resource = "butex" | "notebot" | "analytics";
@@ -86,8 +87,10 @@ export async function handleMcp(req: Request, resource: Resource): Promise<Respo
     return new Response(null, { status: 405, headers: { allow: "POST" } });
   }
 
+  annotate({ event: "mcp", resource });
   const info: KeyInfo | null = await verifyKey(extractKey(req));
   if (!info) {
+    annotate({ auth: extractKey(req) ? "invalid-key" : "no-key" });
     return unauthorized(
       resource,
       resource === "analytics"
@@ -95,10 +98,15 @@ export async function handleMcp(req: Request, resource: Resource): Promise<Respo
         : `Missing or invalid API key. Get a free key at ${env.publicUrl} (just an email), or connect through OAuth.`,
     );
   }
-  if (resource === "analytics" && info.tier !== "admin") return unauthorized(resource, "Admin access required.", 403);
+  annotate({ keyId: keyRef(info.id), tier: info.tier });
+  if (resource === "analytics" && info.tier !== "admin") {
+    log.warn("non-admin key tried the analytics MCP", { event: "auth", keyId: keyRef(info.id), tier: info.tier });
+    return unauthorized(resource, "Admin access required.", 403);
+  }
 
   const limited = await rateLimit(info);
   if (!limited.ok) {
+    log.warn("rate limited", { event: "ratelimit", keyId: keyRef(info.id), tier: info.tier, retryAfter: limited.retryAfter });
     return json(
       { jsonrpc: "2.0", error: { code: -32029, message: limited.message }, id: null },
       { status: 429, headers: { "retry-after": String(limited.retryAfter) } },
@@ -112,10 +120,15 @@ export async function handleMcp(req: Request, resource: Resource): Promise<Respo
   } catch {
     return json({ jsonrpc: "2.0", error: { code: -32700, message: "Parse error: body must be JSON-RPC" }, id: null }, { status: 400 });
   }
-  if (resource !== "analytics") {
-    const calls = (Array.isArray(parsedBody) ? parsedBody : [parsedBody]).filter((m) => (m as { method?: string })?.method === "tools/call").length;
-    if (calls) reportAiUsage(calls);
-  }
+  const msgs = (Array.isArray(parsedBody) ? parsedBody : [parsedBody]) as { method?: string; params?: { name?: string; clientInfo?: { name?: string; version?: string } } }[];
+  const toolNames = msgs.filter((m) => m?.method === "tools/call").map((m) => m.params?.name ?? "?");
+  const client = msgs.find((m) => m?.method === "initialize")?.params?.clientInfo;
+  annotate({
+    rpc: msgs.map((m) => m?.method ?? "response").join(","),
+    ...(toolNames.length ? { tools: toolNames.join(",") } : {}),
+    ...(client ? { client: `${client.name ?? "?"} ${client.version ?? ""}`.trim() } : {}),
+  });
+  if (resource !== "analytics" && toolNames.length) reportAiUsage(toolNames.length);
 
   const server = buildServer(resource);
   const transport = new WebStandardStreamableHTTPServerTransport({ sessionIdGenerator: undefined, enableJsonResponse: true });
@@ -124,7 +137,7 @@ export async function handleMcp(req: Request, resource: Resource): Promise<Respo
     const res = await transport.handleRequest(req, { parsedBody, authInfo: { token: info.id, clientId: info.id, scopes: [info.tier] } });
     return res;
   } catch (err) {
-    console.error("mcp request failed:", err);
+    log.error("mcp request failed", { err, resource });
     return json({ jsonrpc: "2.0", error: { code: -32603, message: `Internal error: ${errMsg(err)}` }, id: null }, { status: 500 });
   } finally {
     // response is fully buffered (enableJsonResponse), so tearing down here is safe

@@ -1,5 +1,5 @@
 import { env } from "../env";
-import { VERSION } from "../version";
+import { ASSET_VERSION, VERSION } from "../version";
 
 export const esc = (s: string) =>
   s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
@@ -33,7 +33,7 @@ export function head(title: string, description: string) {
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="preload" href="/fonts/satoshi-700-all.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/fonts/geist-400-latin.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="/app.css?v=${VERSION}">
+<link rel="stylesheet" href="/app.css?v=${ASSET_VERSION}">
 ${THEME_BOOT}
 </head>`;
 }

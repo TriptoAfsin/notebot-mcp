@@ -1,4 +1,5 @@
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
+import { log } from "../lib/log";
 import { errMsg } from "../lib/util";
 
 /** Every tool is read-only: lets ChatGPT/Claude run them without a confirmation prompt. */
@@ -12,10 +13,15 @@ export const text = (t: string): CallToolResult => ({ content: [{ type: "text", 
  */
 export function guard<A>(name: string, fn: (args: A) => Promise<CallToolResult>, hint?: string) {
   return async (args: A): Promise<CallToolResult> => {
+    const started = performance.now();
     try {
-      return await fn(args);
+      const res = await fn(args);
+      const ms = Math.round(performance.now() - started);
+      // args are search words and levels, never personal data; strings are trimmed by the logger
+      (ms > 15_000 ? log.warn : log.info)(ms > 15_000 ? "tool slow" : "tool", { event: "tool", tool: name, ms, ok: !res.isError, args });
+      return res;
     } catch (err) {
-      console.error(`tool ${name} failed:`, err);
+      log.error("tool failed", { event: "tool", tool: name, ms: Math.round(performance.now() - started), ok: false, args, err });
       return {
         isError: true,
         content: [

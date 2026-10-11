@@ -7,6 +7,7 @@ import { env } from "./env";
 import { cache } from "./lib/cache";
 import { safeEqual } from "./lib/crypto";
 import { db, dbStatus, warmDb } from "./lib/db";
+import { log, newReqId, reqStore, type ReqCtx } from "./lib/log";
 import { keyUsage, readRotateToken, readUnsubscribeToken, requestKey, revokeKey, rotateKeys, unsubscribe } from "./lib/keys";
 import { mailConfigured } from "./lib/mail";
 import { breakerStatus } from "./lib/resilient";
@@ -165,7 +166,11 @@ async function route(req: Request, server: Bun.Server<undefined>): Promise<Respo
 
   // Owner-only export of everyone who asked for a key
   if (path === "/api/admin/contacts.csv") {
-    if (!isAdmin(req)) return json({ error: "Admin key required (X-Admin-Key)." }, { status: 401 });
+    if (!isAdmin(req)) {
+      log.warn("admin export refused", { event: "admin", ip });
+      return json({ error: "Admin key required (X-Admin-Key)." }, { status: 401 });
+    }
+    log.info("admin contacts export", { event: "admin", ip });
     const rows = (await db((sql) => sql`SELECT email, first_seen, last_seen, sources, key_requests, recovery_emails, unsubscribed_at FROM mcp.contacts ORDER BY first_seen`, 15_000)) as Record<string, unknown>[] | null;
     if (!rows) return json({ error: "database unavailable" }, { status: 503 });
     const cols = ["email", "first_seen", "last_seen", "sources", "key_requests", "recovery_emails", "unsubscribed_at"];
@@ -218,24 +223,71 @@ const server = Bun.serve({
   hostname: "0.0.0.0",
   idleTimeout: 120, // notice reads can download a PDF + scans
   maxRequestBodySize: 1024 * 1024,
-  async fetch(req, srv) {
-    try {
-      return await route(req, srv);
-    } catch (err) {
-      console.error("unhandled route error:", err);
-      return json({ error: `Internal error: ${errMsg(err)}` }, { status: 500 });
-    }
+  fetch(req, srv) {
+    const incoming = req.headers.get("x-request-id");
+    const ctx: ReqCtx = { reqId: incoming && /^[\w-]{1,64}$/.test(incoming) ? incoming : newReqId(), fields: {} };
+    return reqStore.run(ctx, async () => {
+      const started = performance.now();
+      let res: Response;
+      try {
+        res = await route(req, srv);
+      } catch (err) {
+        log.error("unhandled route error", { err });
+        res = json({ error: `Internal error: ${errMsg(err)}` }, { status: 500 });
+      }
+      accessLog(req, srv, res, performance.now() - started, ctx);
+      try {
+        res.headers.set("x-request-id", ctx.reqId);
+      } catch {
+        // immutable headers (static file / redirect): skip the echo
+      }
+      return res;
+    });
   },
   error(err) {
-    console.error("server error:", err);
+    log.error("server error", { err });
     return json({ error: "Internal error" }, { status: 500 });
   },
 });
 
-process.on("unhandledRejection", (r) => console.error("unhandledRejection:", r));
-process.on("uncaughtException", (e) => console.error("uncaughtException:", e));
+/** Noise that would drown real traffic: health checks, assets, OAuth discovery probes. */
+const QUIET = /^\/(health|favicon\.ico|apple-touch-icon\.png|icon\.png|app\.(css|js)|fonts\/|mcp-icon-|robots\.txt|\.well-known\/)/;
+
+function accessLog(req: Request, srv: Bun.Server<undefined>, res: Response, ms: number, ctx: ReqCtx) {
+  const url = new URL(req.url);
+  const path = url.pathname; // never the query string: it can carry ?key=
+  const status = res.status;
+  const fields = {
+    event: "request",
+    method: req.method,
+    path,
+    status,
+    ms: Math.round(ms),
+    ip: clientIp(req, srv),
+    ua: (req.headers.get("user-agent") ?? "").slice(0, 120),
+    ...ctx.fields,
+  };
+  if (status >= 500) log.error("request failed", fields);
+  else if (status === 429 || (status >= 400 && status !== 401 && status !== 404)) log.warn("request rejected", fields);
+  else if (QUIET.test(path) || req.method === "OPTIONS") log.debug("request", fields);
+  else log.info("request", fields);
+}
+
+process.on("unhandledRejection", (r) => log.error("unhandledRejection", { err: r }));
+process.on("uncaughtException", (e) => log.error("uncaughtException", { err: e }));
 
 warmDb();
 startButexWarmer();
 startUsageReporter();
-console.log(`🟢 NoteBot MCP v${VERSION} on :${server.port} (public ${env.publicUrl})`);
+log.info("server started", {
+  event: "boot",
+  version: VERSION,
+  port: server.port,
+  publicUrl: env.publicUrl,
+  database: !!env.databaseUrl,
+  redis: !!env.redisUrl,
+  email: mailConfigured(),
+  analytics: !!env.analyticsAdminKey,
+  adminKey: !!env.adminKey,
+  devSecret: env.usingDevSecret,
+});

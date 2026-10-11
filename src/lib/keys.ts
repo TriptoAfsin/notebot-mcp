@@ -3,6 +3,7 @@ import { cache } from "./cache";
 import { hmac, randomId, safeEqual, seal, sha256b64url, unseal } from "./crypto";
 import { db } from "./db";
 import { layout, mailConfigured, sendMail } from "./mail";
+import { keyRef, log, maskEmail } from "./log";
 
 /**
  * API keys are self-verifying: `nbk_<tier>_<id>_<sig>` where sig = HMAC(secret, tier+id).
@@ -115,6 +116,7 @@ export async function requestKey(opts: { email: string; ip: string }): Promise<K
 
   const hourly = await cache.incr(`mcp:issue:ip:${opts.ip}`, 3600);
   if (hourly > env.keyIssuesPerIpHour) {
+    log.warn("key request throttled", { event: "key", action: "throttled", ip: opts.ip });
     return { ok: false, status: 429, error: "Too many requests from this network. Try again in an hour." };
   }
   await recordContact(email, "dashboard", opts.ip);
@@ -128,6 +130,7 @@ export async function requestKey(opts: { email: string; ip: string }): Promise<K
   if (existing?.length) {
     const sent = await cache.incr(`mcp:recovery:${sha256b64url(email)}`, 3600);
     if (sent > env.recoveryEmailsPerHour) {
+      log.warn("key recovery throttled", { event: "key", action: "recovery-throttled", email: maskEmail(email) });
       return { ok: false, status: 429, error: "We've already emailed this address a few times this hour. Check your inbox and spam folder." };
     }
     if (!mailConfigured()) return { ok: false, status: 503, error: "This email already has a key, but email delivery isn't set up yet, so it can't be sent. Try again later." };
@@ -142,7 +145,11 @@ export async function requestKey(opts: { email: string; ip: string }): Promise<K
       footer: `If you didn't ask for this, or think someone else has your key, use the button to revoke it and get a new one (link valid for 1 hour). ${footer(email)}`,
     });
     const ok = await sendMail({ to: email, subject: "Your NoteBot MCP key", ...msg, tags: ["key-recovery"] });
-    if (!ok) return { ok: false, status: 503, error: "This email already has a key, but sending it failed. Try again in a few minutes." };
+    if (!ok) {
+      log.error("key recovery email failed", { event: "key", action: "recovery-failed", email: maskEmail(email) });
+      return { ok: false, status: 503, error: "This email already has a key, but sending it failed. Try again in a few minutes." };
+    }
+    log.info("key emailed to existing owner", { event: "key", action: "recovered", email: maskEmail(email), keys: existing.length });
     await db((sql) => sql`UPDATE mcp.contacts SET recovery_emails = recovery_emails + 1 WHERE email = ${email}`);
     return { ok: true, kind: "emailed", email };
   }
@@ -163,6 +170,7 @@ export async function requestKey(opts: { email: string; ip: string }): Promise<K
     });
     void sendMail({ to: email, subject: "Your NoteBot MCP key", ...msg, tags: ["key-created"] });
   }
+  log.info("key created", { event: "key", action: "created", source: "dashboard", keyId: keyRef(id), email: maskEmail(email), dbDown: existing === null });
   return { ok: true, kind: "created", key, id };
 }
 
@@ -187,6 +195,7 @@ export async function issueOauthKey(opts: { email: string; ip: string; label: st
                    WHERE lower(email) = ${email} AND source = 'oauth' AND revoked_at IS NULL
                    ORDER BY created_at DESC OFFSET ${env.keysPerEmail})`,
   );
+  log.info("key created", { event: "key", action: "created", source: "oauth", client: opts.label, keyId: keyRef(id), email: maskEmail(email) });
   return { ok: true, kind: "created", key, id };
 }
 
@@ -194,6 +203,7 @@ export async function issueOauthKey(opts: { email: string; ip: string; label: st
 export async function issueAdminKey(ip: string, label: string): Promise<string> {
   const { key, id } = mintKey("admin");
   await insertKey(id, "admin", "admin", "oauth", ip, label);
+  log.info("admin key issued", { event: "key", action: "admin-issued", client: label, keyId: keyRef(id), ip });
   return key;
 }
 
@@ -221,6 +231,7 @@ export async function rotateKeys(t: string, ip: string): Promise<{ ok: true; key
   const { key, id } = mintKey("free");
   await insertKey(id, email, "free", "dashboard", ip, "rotated");
   await cache.set(used, true, 2 * 3600);
+  log.info("keys rotated", { event: "key", action: "rotated", email: maskEmail(email), revoked: revoked.length, keyId: keyRef(id) });
   return { ok: true, key, email };
 }
 
@@ -241,6 +252,7 @@ export async function revokeKey(raw: string): Promise<boolean> {
   const res = await db((sql) => sql`UPDATE mcp.api_keys SET revoked_at = now() WHERE id = ${info.id} AND revoked_at IS NULL RETURNING id`);
   if (!res || !(res as unknown[]).length) return false;
   await cache.set(`mcp:revoked:${info.id}`, true, 3600);
+  log.info("key revoked", { event: "key", action: "revoked", keyId: keyRef(info.id) });
   return true;
 }
 

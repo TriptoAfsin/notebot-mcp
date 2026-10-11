@@ -1,5 +1,6 @@
 import { env } from "../env";
 import { errMsg } from "../lib/util";
+import { log } from "../lib/log";
 
 /**
  * Counts public MCP tool calls as platform "ai" in NoteBot analytics, next to
@@ -37,7 +38,7 @@ async function flush() {
       sent++;
     }
   } catch (err) {
-    console.error(`ai usage report deferred (${pending} pending):`, errMsg(err));
+    log.warn("ai usage report deferred", { event: "analytics", pending, err });
   } finally {
     flushing = false;
   }

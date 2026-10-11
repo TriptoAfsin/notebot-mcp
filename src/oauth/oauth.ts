@@ -5,6 +5,7 @@ import { issueAdminKey, issueOauthKey, verifyKey } from "../lib/keys";
 import { json } from "../lib/util";
 import { resourceUrl, type Resource } from "../mcp/handler";
 import { authorizePage } from "../web/pages";
+import { annotate, log } from "../lib/log";
 
 /**
  * Minimal OAuth 2.1 authorization server so Claude.ai / ChatGPT custom connectors
@@ -63,7 +64,11 @@ function redirectAllowed(uri: string): boolean {
   }
 }
 
-const oauthError = (error: string, description: string, status = 400) => json({ error, error_description: description }, { status });
+const oauthError = (error: string, description: string, status = 400) => {
+  // shows up on the access-log line, so failed connector setups are easy to find
+  annotate({ event: "oauth", oauthError: error, detail: description });
+  return json({ error, error_description: description }, { status });
+};
 
 export async function register(req: Request): Promise<Response> {
   let body: { redirect_uris?: unknown; client_name?: unknown };
@@ -157,14 +162,19 @@ export async function authorizePost(req: Request, ip: string): Promise<Response>
     return new Response(null, { status: 302, headers: { location: u.toString(), "cache-control": "no-store" } });
   };
 
-  if (form.get("action") === "deny") return back({ error: "access_denied" });
+  if (form.get("action") === "deny") {
+    log.info("oauth denied by user", { event: "oauth", action: "denied", client: v.client.n, resource: mode });
+    return back({ error: "access_denied" });
+  }
 
   let key: string;
   if (mode === "analytics") {
     const given = form.get("admin_key") ?? "";
     const attempts = await cache.incr(`mcp:adminauth:${ip}`, 900);
+    if (attempts > 10) log.warn("admin sign-in locked out", { event: "oauth", action: "admin-lockout", ip });
     if (attempts > 10) return authorizePage({ params: p, clientName: v.client.n, mode, error: "Too many attempts. Wait 15 minutes." }, 429);
     if (!env.adminKey || !safeEqual(given.trim(), env.adminKey)) {
+      log.warn("wrong admin key on sign-in", { event: "oauth", action: "admin-failed", ip, attempts });
       return authorizePage({ params: p, clientName: v.client.n, mode, error: "That admin key is not correct." }, 401);
     }
     key = await issueAdminKey(ip, v.client.n);
@@ -176,6 +186,7 @@ export async function authorizePost(req: Request, ip: string): Promise<Response>
     key = res.key;
   }
 
+  log.info("oauth approved", { event: "oauth", action: "approved", client: v.client.n, resource: mode });
   const code: Code = { k: key, c: p.code_challenge, r: p.redirect_uri, i: p.client_id, e: Date.now() + CODE_TTL_MS, s: mode };
   return back({ code: seal(code) });
 }
