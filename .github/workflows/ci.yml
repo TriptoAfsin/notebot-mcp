@@ -1,0 +1,17 @@
+name: ci
+on:
+  push:
+    branches: [main]
+  pull_request:
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - run: bunx tsc --noEmit
+      - run: bun test
+      - name: Validate skill
+        run: python3 -c "import re,sys;s=open('skill/butex-notebot/SKILL.md').read();assert s.startswith('---\nname: butex-notebot'),'frontmatter';assert re.search(r'butex-notebot skill version:\s*\d+\.\d+\.\d+',s),'version marker'"
+      - run: python3 -m py_compile skill/butex-notebot/scripts/check_update.py

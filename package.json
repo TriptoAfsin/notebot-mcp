@@ -1,0 +1,26 @@
+{
+  "name": "notebot-mcp",
+  "version": "1.0.0",
+  "description": "MCP server for official BUTEX notices and NoteBot analytics, with a free API-key dashboard",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "start": "bun run src/index.ts",
+    "dev": "bun --watch src/index.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "bun test",
+    "smoke": "bun run scripts/smoke.ts"
+  },
+  "engines": {
+    "bun": ">=1.2.20"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.32.1",
+    "unpdf": "^1.8.1",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "typescript": "^5.9.3"
+  }
+}
