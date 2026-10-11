@@ -43,7 +43,14 @@ const toolText = (r: any) => (r.body?.result?.content ?? []).filter((c: any) => 
 const health = await fetch(`${BASE}/health`).then(j);
 check("health", health.ok === true, `db=${health.database} redis=${health.cache?.redis}`);
 const page = await fetch(BASE + "/");
-check("dashboard renders", page.ok && (await page.text()).includes("Get a free key"));
+const homeHtml = await page.text();
+check("home renders both servers", page.ok && homeHtml.includes("tpl-butex") && homeHtml.includes("tpl-notebot"));
+for (const [route, needle] of [["/key", "Get a free key"], ["/connect/butex", "Antigravity"], ["/connect/notebot", "Gemini"], ["/ask", "What you can ask"], ["/tools", "notebot_search"], ["/agent", "setup.md"]] as const) {
+  const r = await fetch(BASE + route);
+  check(`route ${route}`, r.ok && (await r.text()).includes(needle));
+}
+const hp = await fetch(`${BASE}/api/keys`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ email: `delivered+hp${Date.now()}@resend.dev`, website: "http://spam", elapsed: 5000 }) }).then(j);
+check("honeypot: bot gets a normal reply but no key", hp.status === "emailed" && !("key" in hp));
 
 // Resend sink addresses only: nothing reaches a real inbox
 const EMAIL = `delivered+smoke${Date.now()}@resend.dev`;

@@ -24,51 +24,53 @@ export function mockAddServer() {
   );
 }
 
-export function mockForm(url: string) {
+export type MockServer = { name: string; url: string; icon: string; blurb: string };
+
+export function mockForm(srv: MockServer) {
   return wrap(
     "Add custom MCP server",
     `<div class="mk-main mk-form">
        <div class="mk-icon-slot">+</div><small>Icon (optional): use the Icon PNG below</small>
-       <label>Name</label><div class="mk-input">BUTEX MCP</div>
-       <label>Description (optional)</label><div class="mk-input is-muted">BUTEX notices, results, routines…</div>
+       <label>Name</label><div class="mk-input">${srv.name}</div>
+       <label>Description (optional)</label><div class="mk-input is-muted">${srv.blurb}</div>
        <div class="mk-seg-row"><label>Connection</label><span class="mk-seg"><i class="is-on">Server URL</i><i>Tunnel</i></span></div>
-       <div class="mk-input mk-hit">${url}</div>
+       <div class="mk-input mk-hit">${srv.url}</div>
        <label>Authentication</label><div class="mk-input">OAuth</div>
        <span class="mk-btn">Create as a plugin</span>
      </div>`,
   );
 }
 
-export function mockConnect() {
+export function mockConnect(srv: MockServer) {
   return wrap(
     "ChatGPT asks to connect",
     `<div class="mk-main mk-center">
-       <div class="mk-pair"><span class="mk-app"></span><i></i><i></i><i></i><span class="mk-app is-bx"></span></div>
-       <b>Connect BUTEX MCP</b>
+       <div class="mk-pair"><span class="mk-app"></span><i></i><i></i><i></i><span class="mk-app" style="background-image:url(${srv.icon})" data-icon></span></div>
+       <b>Connect ${srv.name}</b>
        <div class="mk-list"><span>Permissions always respected</span><span>You're in control</span><span>Connectors may introduce risk</span></div>
-       <span class="mk-btn mk-hit">Continue to BUTEX MCP ↗</span>
+       <span class="mk-btn mk-hit">Continue to ${srv.name} ↗</span>
      </div>`,
   );
 }
 
-export function mockConsent() {
+export function mockConsent(srv: MockServer) {
   return wrap(
     "NoteBot page opens",
     `<div class="mk-main mk-form">
        <div class="mk-brand"><img src="/icon.png" alt="" width="16" height="16"><b>NoteBot</b></div>
-       <b>ChatGPT wants to use the BUTEX MCP</b>
+       <b>ChatGPT wants to use ${srv.name}</b>
        <label>Email</label><div class="mk-input">you@example.com</div>
        <div class="mk-btns"><span class="mk-btn is-ghost">Cancel</span><span class="mk-btn is-primary mk-hit">Allow</span></div>
      </div>`,
   );
 }
 
-export function mockChat() {
+export function mockChat(srv: MockServer, ask: string) {
   return wrap(
     "New chat",
     `<div class="mk-main mk-chat">
-       <div class="mk-bubble">Latest BUTEX notices?</div>
-       <div class="mk-composer mk-hit"><span class="mk-chip">@ BUTEX MCP</span><span class="is-muted">Ask anything</span></div>
+       <div class="mk-bubble">${ask}</div>
+       <div class="mk-composer mk-hit"><span class="mk-chip">@ ${srv.name}</span><span class="is-muted">Ask anything</span></div>
      </div>`,
   );
 }

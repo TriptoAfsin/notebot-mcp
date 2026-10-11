@@ -110,9 +110,43 @@ export type KeyRequestResult =
  * An address that already holds a key gets it emailed instead, so typing
  * someone else's email never reveals their key.
  */
-export async function requestKey(opts: { email: string; ip: string }): Promise<KeyRequestResult> {
+/**
+ * Bot signals from the dashboard form: a hidden "website" field people never see,
+ * and how long the form was open. A filled honeypot or a sub-second submit gets a
+ * normal-looking reply but nothing is created or sent.
+ */
+function looksLikeBot(opts: { website?: string; elapsed?: number }): string | null {
+  if (opts.website && opts.website.trim()) return "honeypot";
+  if (typeof opts.elapsed === "number" && opts.elapsed >= 0 && opts.elapsed < 800) return "too-fast";
+  return null;
+}
+
+/**
+ * One budget for every email we send on someone's behalf: per sender IP (hour and day),
+ * per recipient address (day) and a global hourly ceiling. Counted before sending.
+ */
+async function mailBudget(ip: string, email: string): Promise<{ ok: true } | { ok: false; reason: string }> {
+  const to = sha256b64url(email);
+  const [ipHour, ipDay, addrDay, global] = await Promise.all([
+    cache.incr(`mcp:mail:ip:h:${ip}`, 3600),
+    cache.incr(`mcp:mail:ip:d:${ip}`, 86_400),
+    cache.incr(`mcp:mail:to:d:${to}`, 86_400),
+    cache.incr("mcp:mail:global:h", 3600),
+  ]);
+  if (ipHour > env.emailsPerIpHour || ipDay > env.emailsPerIpDay) return { ok: false, reason: "ip" };
+  if (addrDay > env.emailsPerAddressDay) return { ok: false, reason: "address" };
+  if (global > env.emailsGlobalHour) return { ok: false, reason: "global" };
+  return { ok: true };
+}
+
+export async function requestKey(opts: { email: string; ip: string; website?: string; elapsed?: number }): Promise<KeyRequestResult> {
   const email = normEmail(opts.email);
   if (!emailIsValid(email)) return { ok: false, status: 400, error: "That doesn't look like a valid email address." };
+  const bot = looksLikeBot(opts);
+  if (bot) {
+    log.warn("key request dropped as bot", { event: "abuse", reason: bot, ip: opts.ip, email: maskEmail(email) });
+    return { ok: true, kind: "emailed", email };
+  }
 
   const hourly = await cache.incr(`mcp:issue:ip:${opts.ip}`, 3600);
   if (hourly > env.keyIssuesPerIpHour) {
@@ -134,11 +168,16 @@ export async function requestKey(opts: { email: string; ip: string }): Promise<K
       return { ok: false, status: 429, error: "We've already emailed this address a few times this hour. Check your inbox and spam folder." };
     }
     if (!mailConfigured()) return { ok: false, status: 503, error: "This email already has a key, but email delivery isn't set up yet, so it can't be sent. Try again later." };
+    const budget = await mailBudget(opts.ip, email);
+    if (!budget.ok) {
+      log.warn("recovery email refused by mail budget", { event: "abuse", reason: budget.reason, ip: opts.ip, email: maskEmail(email) });
+      return { ok: false, status: 429, error: "Too many emails sent from here today. Check your inbox and spam folder, or try again tomorrow." };
+    }
     const msg = layout({
       title: "Your NoteBot MCP key",
       paragraphs: [
         "Someone (hopefully you) asked for a NoteBot MCP key with this address. It already has one, so here it is again. It works on both servers: the BUTEX MCP and the NoteBot knowledge base.",
-        `Setup guides for Claude, ChatGPT, Claude Code and Cursor: <a href="${env.publicUrl}/#connect">${env.publicUrl}/#connect</a>`,
+        `Step-by-step setup for Claude, ChatGPT, Gemini, Antigravity, Claude Code and Cursor: <a href="${env.publicUrl}/connect">${env.publicUrl}/connect</a>`,
       ],
       keys: existing.map((k) => keyFor(k.id, k.tier)),
       action: { label: "Replace with a fresh key", url: rotateUrl(email) },
@@ -157,12 +196,14 @@ export async function requestKey(opts: { email: string; ip: string }): Promise<K
   // existing === null means the DB is unreachable: issue a key anyway (keys don't need the DB)
   const { key, id } = mintKey("free");
   await insertKey(id, email, "free", "dashboard", opts.ip);
-  if (mailConfigured()) {
+  const budget = mailConfigured() ? await mailBudget(opts.ip, email) : { ok: false as const, reason: "no-mail" };
+  if (!budget.ok && budget.reason !== "no-mail") log.warn("welcome email skipped by mail budget", { event: "abuse", reason: budget.reason, ip: opts.ip, email: maskEmail(email) });
+  if (budget.ok) {
     const msg = layout({
       title: "Welcome to NoteBot MCP",
       paragraphs: [
         "Here's a copy of the key you just created. It works on both servers: <b>BUTEX MCP</b> (/butex/mcp) and the <b>NoteBot knowledge base</b> (/notebot/mcp).",
-        `Setup guides for Claude, ChatGPT, Claude Code and Cursor: <a href="${env.publicUrl}/#connect">${env.publicUrl}/#connect</a>`,
+        `Step-by-step setup for Claude, ChatGPT, Gemini, Antigravity, Claude Code and Cursor: <a href="${env.publicUrl}/connect">${env.publicUrl}/connect</a>`,
       ],
       keys: [key],
       action: { label: "Didn't request this? Replace the key", url: rotateUrl(email) },

@@ -1,38 +1,203 @@
 import { env } from "../env";
 import { ASSET_VERSION, VERSION } from "../version";
+import { guideHtml, keyForm, SERVERS, serverUrl, snippet, type ServerId } from "./guide";
 import { brand, copyBtn, esc, head, ICON } from "./pages";
-import { mockAddServer, mockChat, mockConnect, mockConsent, mockDeveloperMode, mockForm } from "./mockups";
 
 export type ToolDoc = { name: string; title: string; description: string };
 export type ServerDoc = { id: string; name: string; tools: ToolDoc[]; guidelines: string };
 export type DashboardData = { servers: ServerDoc[]; skillVersion: string };
 
-function snippet(id: string, label: string, body: string) {
-  return `<div class="snippet-wrap">
-  <header><span class="label">${esc(label)}</span>${copyBtn(`#${id}`)}</header>
-  <pre class="snippet" id="${id}" data-template="${esc(body)}">${esc(body)}</pre>
-</div>`;
+type Route = "home" | "connect" | "ask" | "tools" | "agent" | "key";
+
+const NAV: [Route, string, string][] = [
+  ["ask", "/ask", "What to ask"],
+  ["tools", "/tools", "Tools"],
+  ["agent", "/agent", "Agent skill"],
+  ["key", "/key", "Your key"],
+];
+
+/** Shared shell: header, footer, one entrance per route. Cross-document view transitions animate between routes. */
+function layout(o: { title: string; description: string; route: Route; body: string; extra?: string }): Response {
+  const links = NAV.map(([r, href, label]) => `<a href="${href}"${o.route === r ? ' aria-current="page"' : ""}>${label}</a>`).join("");
+  const html = `${head(o.title, o.description)}
+<body data-route="${o.route}">
+<a class="skip" href="#main">Skip to content</a>
+<header class="bar" data-bar>
+  <div class="wrap bar__inner">
+    ${brand}
+    <nav class="bar__nav" aria-label="Pages">${links}</nav>
+    <a class="btn btn--primary btn--sm bar__cta" href="/#choose">Set up</a>
+    <button class="icon-btn" type="button" data-theme-toggle aria-label="Toggle dark mode">${ICON.sun}${ICON.moon}</button>
+  </div>
+</header>
+<main id="main" class="page">
+${o.body}
+</main>
+<footer class="foot">
+  <div class="wrap">
+    <span>NoteBot MCP v${esc(VERSION)}</span>
+    <span>A student project. Not an official BUTEX service. Notices come from <a href="https://www.butex.edu.bd">butex.edu.bd</a>; notes from the NoteBot community.</span>
+    <a href="https://butexnotebot.com">butexnotebot.com</a>
+    <a href="/health">Status</a>
+  </div>
+</footer>
+${o.extra ?? ""}
+<script src="/app.js?v=${ASSET_VERSION}" defer></script>
+</body>
+</html>`;
+  return new Response(html, { headers: { "content-type": "text/html; charset=utf-8", "cache-control": "public, max-age=300" } });
 }
 
-/** Shown with a new (or emailed) key: the short connect guide plus the full-guide link. */
-function nextSteps() {
-  const guide = `${env.publicUrl}/#connect`;
-  return `<div class="key-next">
-          <p class="label">Next: connect it</p>
-          <ol class="steps">
-            <li><b>Claude</b>: Settings → Connectors → Add custom connector, paste an endpoint, then Connect.</li>
-            <li><b>ChatGPT</b>: Settings → Security and login → Developer mode on, then chatgpt.com/plugins → + → Add custom MCP server, with OAuth.</li>
-            <li><b>Claude Code, Cursor, others</b>: copy a snippet from the guide; your key is already filled in.</li>
-          </ol>
-          <p class="label">Show me the steps for</p>
-          <div class="picker">
-            <a class="pick" href="#connect" data-pick="claude">Claude<span aria-hidden="true">→</span></a>
-            <a class="pick" href="#connect" data-pick="chatgpt">ChatGPT<span aria-hidden="true">→</span></a>
-            <a class="pick" href="#connect" data-pick="other">Something else<span aria-hidden="true">→</span></a>
-          </div>
-          <p class="hint">Full guide: <a href="#connect">${esc(guide)}</a></p>
-        </div>`;
+const toolCount = (d: DashboardData, id: ServerId) => d.servers.find((s) => s.id === id)?.tools.filter((t) => !t.name.includes("·")).length ?? 0;
+
+// ── Home: pick a server ─────────────────────────────────────────────────────
+
+function serverCard(d: DashboardData, id: ServerId, i: number) {
+  const s = SERVERS[id];
+  return `<article class="srv rise" style="--i:${i + 1}" data-srv="${id}">
+  <div class="srv__head">
+    <img class="srv__icon" style="view-transition-name: icon-${id}" src="${s.icon}" width="56" height="56" alt="">
+    <div><h2 class="srv__name" style="view-transition-name: name-${id}">${esc(s.name)}</h2><p class="srv__meta">${toolCount(d, id)} read-only tools · ${esc(s.source)}</p></div>
+  </div>
+  <p class="srv__pitch">${esc(s.pitch)}</p>
+  <ul class="srv__asks" aria-label="You could ask">${s.asks.map((a, j) => `<li style="--j:${j}">${esc(a)}</li>`).join("")}</ul>
+  <div class="srv__foot">
+    <a class="btn btn--primary srv__go" href="/connect/${id}" data-setup="${id}">Set up ${esc(s.short)}<span class="btn__arrow" aria-hidden="true">→</span></a>
+    <a class="srv__more" href="/ask#${id}">What it can do</a>
+  </div>
+</article>`;
 }
+
+export function dashboardPage(d: DashboardData): Response {
+  const body = `<section class="wrap hero">
+  <h1 class="hero__title rise">Ask your AI about BUTEX.</h1>
+  <p class="hero__lede rise" style="--i:1">Two free MCP servers that plug into Claude, ChatGPT, Gemini and your code editor. Pick one, or set up both: one email covers them.</p>
+</section>
+
+<section class="wrap choose" id="choose" aria-label="Pick a server">
+  ${serverCard(d, "butex", 1)}
+  ${serverCard(d, "notebot", 2)}
+</section>
+
+<section class="wrap facts-row rise" style="--i:4" aria-label="How it behaves">
+  <div><b>Free</b><span>One email gets a key for both servers. Claude, ChatGPT and Gemini sign you in by themselves.</span></div>
+  <div><b>Read-only</b><span>Nothing can be changed on butex.edu.bd or in NoteBot. Revoke access any time.</span></div>
+  <div><b>Checkable</b><span>Every answer links the official notice or the note it came from.</span></div>
+  <div><b>Steady</b><span>When a source is down it answers from cache and says so.</span></div>
+</section>
+
+<section class="wrap board-row rise" style="--i:5" aria-labelledby="board-h">
+  <div class="board-row__head"><h2 id="board-h">Latest on the BUTEX board</h2><a href="/ask#butex">Ask about these →</a></div>
+  <div class="board" data-board aria-live="polite"><div class="sk"></div><div class="sk"></div><div class="sk"></div></div>
+</section>`;
+
+  // Both guides ride along as inert templates; the setup sheet clones the one you pick.
+  const sheet = `<dialog class="sheet" data-sheet aria-labelledby="sheet-title">
+  <div class="sheet__panel">
+    <header class="sheet__head">
+      <img class="sheet__icon" data-sheet-icon src="" width="40" height="40" alt="">
+      <div class="sheet__titles"><h2 id="sheet-title" data-sheet-title></h2><a class="sheet__full" data-sheet-full href="#">Open as a page ↗</a></div>
+      <button class="icon-btn sheet__close" type="button" data-sheet-close aria-label="Close">${ICON.close}</button>
+    </header>
+    <div class="sheet__body" data-sheet-body></div>
+  </div>
+</dialog>
+${(["butex", "notebot"] as ServerId[]).map((id) => `<template id="tpl-${id}" data-name="${esc(SERVERS[id].name)}" data-icon="${SERVERS[id].icon}">${guideHtml(id, "sheet")}</template>`).join("")}`;
+
+  return layout({
+    title: "NoteBot MCP: BUTEX info and study notes in your AI",
+    description: "Free MCP servers for BUTEX students: official notices, routines, results, departments and faculty, plus the NoteBot knowledge base of notes, lab reports and study plans. Works in Claude, ChatGPT, Gemini, Antigravity, Claude Code and Cursor.",
+    route: "home",
+    body,
+    extra: sheet,
+  });
+}
+
+// ── /connect/<id>: the guide as a full page ─────────────────────────────────
+
+export function connectPage(d: DashboardData, id: ServerId, app?: string): Response {
+  const s = SERVERS[id];
+  const other = SERVERS[id === "butex" ? "notebot" : "butex"];
+  const body = `<section class="wrap page-head connect-head">
+  <a class="back rise" href="/#choose">← Both servers</a>
+  <div class="connect-head__id rise" style="--i:1">
+    <img class="srv__icon" style="view-transition-name: icon-${id}" src="${s.icon}" width="56" height="56" alt="">
+    <div><h1 style="view-transition-name: name-${id}">Set up ${esc(s.name)}</h1><p class="srv__meta">${toolCount(d, id)} read-only tools · ${esc(s.source)}</p></div>
+  </div>
+  <div class="copy connect-head__url rise" style="--i:2"><code id="url-${id}">${esc(serverUrl(id))}</code>${copyBtn(`#url-${id}`)}</div>
+</section>
+<section class="wrap rise" style="--i:3">${guideHtml(id, "page", app)}</section>
+<section class="wrap also rise" style="--i:4">
+  <img src="${other.icon}" width="32" height="32" alt=""><p>Want ${esc(other.name)} too? The same key works.</p><a class="btn btn--sm" href="/connect/${other.id}">Set up ${esc(other.short)} →</a>
+</section>`;
+  return layout({ title: `Set up ${s.name} · NoteBot MCP`, description: `Step-by-step setup for ${s.name} in Claude, ChatGPT, Gemini, Antigravity, Claude Code, Cursor and VS Code.`, route: "connect", body });
+}
+
+// ── /ask: use cases ─────────────────────────────────────────────────────────
+
+type UseCase = { who: string; ask: string; get: string };
+
+// Real scenarios only: each one maps to a tool that exists today.
+const USE_CASES: Record<ServerId, UseCase[]> = {
+  butex: [
+    { who: "Results day", ask: "Did the L4-T1 results come out?", get: "The matching result notices with their posting dates and official links." },
+    { who: "Exam planning", ask: "When is the L2-T2 final exam routine?", get: "The newest exam schedule, with dates read from the scanned notice." },
+    { who: "Term deadlines", ask: "When do BSc classes end and when is the entry form due?", get: "The class-completion notice with each date quoted as printed." },
+    { who: "Department", ask: "Tell me about the Wet Process department.", get: "Head and contact, degrees with seats and credits, and the faculty list." },
+    { who: "Find a teacher", ask: "Who at BUTEX works on smart textiles?", get: "Teachers across departments with that research interest, with official emails." },
+    { who: "Offices & halls", ask: "Who is the exam controller, and how do I reach them?", get: "The Examination Office page: officers, designations and official contacts." },
+  ],
+  notebot: [
+    { who: "Find notes", ask: "YM-I notes for Level 2", get: "Topic-by-topic note links for the subject, plus its books." },
+    { who: "Lab week", ask: "Lab reports for Phy-I", get: "Every lab report for that subject, with links." },
+    { who: "Before finals", ask: "Previous questions for FM-I", get: "Question banks and suggestions shared for that subject." },
+    { who: "Syllabus", ask: "What's in the Level 3 syllabus?", get: "The syllabus for that level and batch, with links." },
+    { who: "Study plan", ask: "Finals in 10 days: YM-I and FM-I. Plan it.", get: "A day-by-day plan built from real topics, each day linked to its notes." },
+    { who: "Not sure what next", ask: "What are Level 3 students studying most?", get: "The most-opened notes and labs, so you can follow what others use." },
+  ],
+};
+
+export function askPage(): Response {
+  const group = (id: ServerId, i: number) => `<section class="ask-group rise" style="--i:${i + 2}" id="${id}" data-filter-item="${id}">
+  <div class="ask-group__head"><img src="${SERVERS[id].icon}" width="32" height="32" alt=""><h2>${esc(SERVERS[id].name)}</h2><a class="btn btn--sm" href="/connect/${id}">Set up →</a></div>
+  <ul class="asks">${USE_CASES[id]
+    .map((c) => `<li><span class="label">${esc(c.who)}</span><p class="asks__q">${esc(c.ask)}</p><p class="asks__a">${esc(c.get)}</p></li>`)
+    .join("")}</ul>
+</section>`;
+  const body = `<section class="wrap page-head">
+  <h1 class="rise">What you can ask</h1>
+  <p class="page-head__lede rise" style="--i:1">Type it the way you'd ask a senior. The AI picks the right tool, and the answer links to its source. More in the <a href="https://github.com/TriptoAfsin/notebot-mcp/blob/main/docs/use-cases.md">use-case guide</a>.</p>
+  <div class="seg rise" style="--i:1" role="group" aria-label="Show" data-filter>
+    <button type="button" aria-pressed="true" data-filter-btn="all">Both</button>
+    <button type="button" aria-pressed="false" data-filter-btn="butex">BUTEX MCP</button>
+    <button type="button" aria-pressed="false" data-filter-btn="notebot">NoteBot</button>
+  </div>
+</section>
+<div class="wrap ask-wrap">${group("butex", 0)}${group("notebot", 1)}</div>`;
+  return layout({ title: "What you can ask · NoteBot MCP", description: "Real questions BUTEX students ask through the BUTEX MCP and the NoteBot knowledge base.", route: "ask", body });
+}
+
+// ── /tools ──────────────────────────────────────────────────────────────────
+
+export function toolsPage(d: DashboardData): Response {
+  const groups = d.servers
+    .map(
+      (srv, i) => `<section class="tool-group rise" style="--i:${i + 1}" id="${esc(srv.id)}">
+  <div class="tool-group__head"><h2>${esc(srv.name)}</h2><code class="endpoint-tag">/${esc(srv.id)}/mcp</code></div>
+  <ul class="tools">${srv.tools.map((t) => `<li><code>${esc(t.name)}</code><p>${esc(t.description)}</p></li>`).join("")}</ul>
+  <details class="help guidelines-box"><summary>Instructions this server gives every AI</summary><pre class="guidelines">${esc(srv.guidelines)}</pre></details>
+</section>`,
+    )
+    .join("");
+  const body = `<section class="wrap page-head">
+  <h1 class="rise">Tools</h1>
+  <p class="page-head__lede rise" style="--i:1">Every tool only reads. BUTEX MCP reads butex.edu.bd's own feed and pages; the NoteBot knowledge base reads the NoteBot engine. Results are cached so neither source gets hammered. The server instructions are also in <a href="https://github.com/TriptoAfsin/notebot-mcp/blob/main/AGENTS.md">AGENTS.md</a>.</p>
+</section>
+<div class="wrap">${groups}</div>`;
+  return layout({ title: "Tools · NoteBot MCP", description: "Every tool the BUTEX MCP and NoteBot knowledge base expose, and the instructions they give AI apps.", route: "tools", body });
+}
+
+// ── /agent: skill ───────────────────────────────────────────────────────────
 
 /** Step-by-step setup an agent can follow on its own; served at /setup.md. */
 export function agentSetup() {
@@ -49,355 +214,76 @@ Do these steps for the user.
    - butex: ${u}/butex/mcp
    - notebot: ${u}/notebot/mcp
    - Claude Code: \`claude mcp add --transport http butex ${u}/butex/mcp\` and \`claude mcp add --transport http notebot ${u}/notebot/mcp\`
-   - No OAuth support: ask the user for their free key (${u}/#get-key) and send it as the header \`Authorization: Bearer <key>\`.
+   - Antigravity: add \`{"serverUrl": "${u}/butex/mcp"}\` (and the notebot one) under \`mcpServers\` in its mcp_config.json, then Authenticate.
+   - No OAuth support: ask the user for their free key (${u}/key) and send it as the header \`Authorization: Bearer <key>\`.
 3. Read ${u}/llms.txt for what each server does.
 4. Confirm it works by calling butex_status and notebot_status, then tell the user what they can ask.
 `;
 }
 
-/** The short prompt the dashboard asks people to paste into their agent. */
-function agentPrompt() {
-  return `Set up BUTEX NoteBot for me: follow ${env.publicUrl}/setup.md (installs the butex-notebot skill and adds the BUTEX and NoteBot MCP servers).`;
-}
-
-type UseCase = { who: string; ask: string; get: string };
-type UseCaseGroup = { server: string; endpoint: string; blurb: string; cases: UseCase[] };
-
-// Real scenarios only: each one maps to a tool that exists today.
-const USE_CASES: UseCaseGroup[] = [
-  {
-    server: "BUTEX MCP",
-    endpoint: "/butex/mcp",
-    blurb: "The whole official butex.edu.bd site in plain words: notices (scans opened and read), departments, teachers, offices and halls. Every answer links the original.",
-    cases: [
-      { who: "Results day", ask: "Did the L4-T1 results come out?", get: "The matching result notices with their posting dates and official links." },
-      { who: "Exam planning", ask: "When is the L2-T2 final exam routine?", get: "The newest exam schedule, with dates read from the scanned notice." },
-      { who: "Term deadlines", ask: "When do BSc classes end and when is the entry form due?", get: "The class-completion notice with each date quoted as printed." },
-      { who: "Department", ask: "Tell me about the Wet Process department.", get: "Head and contact, degrees with seats and credits, and the faculty list." },
-      { who: "Find a teacher", ask: "Who at BUTEX works on smart textiles?", get: "Teachers across departments with that research interest, with official emails." },
-      { who: "Offices & halls", ask: "Who is the exam controller, and how do I reach them?", get: "The Examination Office page: officers, designations and official contacts." },
-    ],
-  },
-  {
-    server: "NoteBot knowledge base",
-    endpoint: "/notebot/mcp",
-    blurb: "Notes, books, lab reports and previous questions shared by BUTEX students, plus study plans built from them.",
-    cases: [
-      { who: "Find notes", ask: "YM-I notes for Level 2", get: "Topic-by-topic note links for the subject, plus its books." },
-      { who: "Lab week", ask: "Lab reports for Phy-I", get: "Every lab report for that subject, with links." },
-      { who: "Before finals", ask: "Previous questions for FM-I", get: "Question banks and suggestions shared for that subject." },
-      { who: "Syllabus", ask: "What's in the Level 3 syllabus?", get: "The syllabus for that level and batch, with links." },
-      { who: "Study plan", ask: "Finals in 10 days: YM-I and FM-I. Plan it.", get: "A day-by-day plan built from real topics, each day linked to its notes." },
-      { who: "Not sure what next", ask: "What are Level 3 students studying most?", get: "The most-opened notes and labs, so you can follow what others use." },
-    ],
-  },
-];
-
-function useCasesSection() {
-  const groups = USE_CASES.map(
-    (g) => `<div class="tool-group">
-  <h3>${esc(g.server)} <code class="endpoint-tag">${esc(g.endpoint)}</code></h3>
-  <p class="uc-blurb">${esc(g.blurb)}</p>
-  <ul class="uc">${g.cases
-    .map((c) => `<li><span class="label">${esc(c.who)}</span><p class="uc-ask">&ldquo;${esc(c.ask)}&rdquo;</p><p class="uc-get">${esc(c.get)}</p></li>`)
-    .join("")}</ul>
-</div>`,
-  ).join("");
-  return `<section class="section" id="use-cases" aria-labelledby="uc-h">
-    <div class="wrap">
-      <div class="section__head"><h2 id="uc-h">What you can ask</h2><p>Type these as you would to a senior. The AI picks the right tool, and the answer always links to the source. More in the <a href="https://github.com/TriptoAfsin/notebot-mcp/blob/main/docs/use-cases.md">use-case guide</a>.</p></div>
-      ${groups}
-    </div>
-  </section>`;
-}
-
-type Step = string | { text: string; mock?: string };
-type Tab = { id: string; label: string; steps: Step[]; snippets: [string, string][]; cards?: boolean; help?: { title: string; items: string[] } };
-
-/** What to type into a client's "add custom MCP server / connector" form, per server. */
-const PLUGIN_INFO = [
-  { id: "butex", name: "BUTEX MCP", description: "BUTEX notices, results, routines, departments and teachers from butex.edu.bd", icon: "/mcp-icon-butex.png" },
-  { id: "notebot", name: "NoteBot knowledge base", description: "BUTEX notes, books, lab reports, question banks and study plans from NoteBot", icon: "/mcp-icon-notebot.png" },
-];
-
-function copyField(id: string, label: string, value: string) {
-  return `<div class="pfield"><span class="label">${esc(label)}</span><div class="copy"><code id="${id}">${esc(value)}</code>${copyBtn(`#${id}`)}</div></div>`;
-}
-
-function pluginCards(tab: string) {
-  return PLUGIN_INFO.map(
-    (p) => `<div class="pcard">
-    <div class="pcard__head">
-      <img class="pcard__icon" src="${p.icon}" width="40" height="40" alt="">
-      <div class="pcard__title"><b>${esc(p.name)}</b><span>/${esc(p.id)}/mcp</span></div>
-      <a class="btn btn--sm btn--quiet" href="${p.icon}" download="${p.id}-mcp-icon.png" aria-label="Download ${esc(p.name)} icon (PNG)">${ICON.download}<span class="btn__label">Icon</span></a>
-    </div>
-    <div class="pcard__fields">
-      ${copyField(`pf-${tab}-${p.id}-name`, "Name", p.name)}
-      ${copyField(`pf-${tab}-${p.id}-desc`, "Description", p.description)}
-      ${copyField(`pf-${tab}-${p.id}-url`, "Server URL", `${env.publicUrl}/${p.id}/mcp`)}
-    </div>
-  </div>`,
-  ).join("");
-}
-
-function clientTabs(butex: string, notebot: string): Tab[] {
-  const k = "YOUR_KEY";
-  const auth = { Authorization: `Bearer ${k}` };
-  return [
-    {
-      id: "claude",
-      label: "Claude",
-      steps: [
-        "Open claude.ai → Settings → Connectors → <b>Add custom connector</b>.",
-        "Add one connector per server: copy the name and server URL from the cards. Leave the OAuth fields empty.",
-        "Click <b>Connect</b>. A NoteBot page opens; enter your email to approve.",
-        "Connectors you add on the web also show up in the Claude desktop and mobile apps. Turn them on per chat from the tools menu.",
-      ],
-      snippets: [],
-      cards: true,
-    },
-    {
-      id: "chatgpt",
-      label: "ChatGPT",
-      steps: [
-        { text: "On chatgpt.com, open Settings → <b>Security and login</b> and turn on <b>Developer mode</b>. Needs Plus, Pro, Business, Enterprise or Edu; on a workspace, an admin may have to allow it.", mock: mockDeveloperMode() },
-        { text: "Go to <b>chatgpt.com/plugins</b>, press <b>+</b>, then <b>Add custom MCP server</b>. You'll add one per server, so do this twice.", mock: mockAddServer() },
-        { text: "Fill the form from the cards on this page: icon (<b>Icon PNG</b>), name, description, and the server URL under <b>Connection → Server URL</b>. Keep Authentication on <b>OAuth</b>, accept the warning, then <b>Create as a plugin</b>.", mock: mockForm(butex) },
-        { text: "ChatGPT shows <b>Connect BUTEX MCP</b> (it uses the name you typed) with three notes about permissions. That's ChatGPT's standard notice for every plugin. Press <b>Continue to BUTEX MCP</b>.", mock: mockConnect() },
-        { text: "A NoteBot page opens. Enter your email and press <b>Allow</b>. That creates your free key and sends you back to ChatGPT. Access is read-only, and you can revoke it any time.", mock: mockConsent() },
-        { text: "Start a <b>new chat</b>, type <b>@</b> and pick the plugin, then ask. Menus moved in 2026; if yours differ, look for Plugins or Connectors.", mock: mockChat() },
-      ],
-      snippets: [],
-      cards: true,
-      help: {
-        title: "ChatGPT says it can't find the BUTEX MCP tools?",
-        items: [
-          "Open <b>chatgpt.com/plugins</b> and click the plugin. If it says <b>Connect</b> or <b>Sign in</b>, finish the NoteBot email step: without it ChatGPT gets no tools.",
-          "On the same page, check its tools are switched <b>on</b>, then press <b>Refresh</b>.",
-          "Start a <b>new chat</b>. A chat opened before the plugin was ready won't see it.",
-          "Pick it with <b>@</b> (or + → Developer mode) and ask directly, e.g. <q>Use BUTEX MCP: what are the latest notices?</q>",
-          "Still nothing? Delete the plugin and add it again. Custom plugins only work on chatgpt.com in a browser, not the mobile app.",
-        ],
-      },
-    },
-    {
-      id: "code",
-      label: "Claude Code",
-      steps: [
-        "Get a key above (or leave out the header and Claude Code runs the OAuth sign-in when you type <code>/mcp</code>).",
-        "Run both commands. Add <code>--scope user</code> to make them available in every project.",
-      ],
-      snippets: [
-        [
-          "Terminal",
-          [`claude mcp add --transport http butex ${butex} --header "Authorization: Bearer ${k}"`, `claude mcp add --transport http notebot ${notebot} --header "Authorization: Bearer ${k}"`].join("\n"),
-        ],
-      ],
-    },
-    {
-      id: "editors",
-      label: "Cursor · VS Code",
-      steps: ["Paste into <code>~/.cursor/mcp.json</code> (Cursor) or <code>.vscode/mcp.json</code> (VS Code).", "Reload the window; the tools appear under <b>butex</b> and <b>notebot</b>."],
-      snippets: [
-        ["Cursor · mcp.json", JSON.stringify({ mcpServers: { butex: { url: butex, headers: auth }, notebot: { url: notebot, headers: auth } } }, null, 2)],
-        ["VS Code · mcp.json", JSON.stringify({ servers: { butex: { type: "http", url: butex, headers: auth }, notebot: { type: "http", url: notebot, headers: auth } } }, null, 2)],
-      ],
-    },
-    {
-      id: "other",
-      label: "Other apps",
-      steps: [
-        "Streamable HTTP transport, stateless, JSON responses. One key works on both servers.",
-        "Send the key as <code>Authorization: Bearer …</code> or <code>x-api-key</code>. Clients that only take a URL can put it in <code>?key=</code>.",
-      ],
-      snippets: [
-        ["URLs with key", `${butex}?key=${k}\n${notebot}?key=${k}`],
-        [
-          "curl",
-          `curl -s ${notebot} \\\n  -H "Authorization: Bearer ${k}" \\\n  -H "Content-Type: application/json" \\\n  -H "Accept: application/json, text/event-stream" \\\n  -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'`,
-        ],
-      ],
-    },
-  ];
-}
-
-export function dashboardPage(d: DashboardData): Response {
-  const butex = `${env.publicUrl}/butex/mcp`;
-  const notebot = `${env.publicUrl}/notebot/mcp`;
-  const tabs = clientTabs(butex, notebot);
-
-  const tabButtons = tabs
-    .map((t, i) => `<button class="tab" role="tab" id="tab-${t.id}" aria-controls="panel-${t.id}" aria-selected="${i === 0}" tabindex="${i === 0 ? 0 : -1}">${esc(t.label)}</button>`)
-    .join("");
-  const panels = tabs
-    .map(
-      (t, i) => `<div class="panel" role="tabpanel" id="panel-${t.id}" aria-labelledby="tab-${t.id}"${i === 0 ? "" : " hidden"}>
-  <div class="guide" data-guide="${t.id}">
-    <div class="progress" aria-live="polite"><div class="progress__track"><i data-progress-bar></i></div><span data-progress-text>0 of ${t.steps.length} done</span></div>
-    <ol class="steps steps--check">${t.steps
-      .map((s, j) => {
-        const { text, mock } = typeof s === "string" ? { text: s, mock: "" } : s;
-        return `<li><button class="tick" type="button" aria-pressed="false" data-step="${j}" aria-label="Mark step ${j + 1} done">${ICON.check}</button><div class="step__body">${text}${mock ?? ""}</div></li>`;
-      })
-      .join("")}</ol>
-    ${t.help ? `<details class="help"><summary>${esc(t.help.title)}</summary><ol>${t.help.items.map((x) => `<li>${x}</li>`).join("")}</ol></details>` : ""}
-    <p class="done-note" data-done hidden>All set. Open a new chat and ask something like <q>Any new notice from BUTEX?</q> or <q>YM-I notes for Level 2</q>.</p>
+export function agentPage(d: DashboardData): Response {
+  const prompt = `Set up BUTEX NoteBot for me: follow ${env.publicUrl}/setup.md (installs the butex-notebot skill and adds the BUTEX and NoteBot MCP servers).`;
+  const body = `<section class="wrap page-head">
+  <h1 class="rise">Agent skill</h1>
+  <p class="page-head__lede rise" style="--i:1">A <code>SKILL.md</code> that teaches your agent both servers: which tool fits which question, how to read scanned notices, and how to build study plans. It checks <code>/skill/version.json</code> each run and updates itself.</p>
+  <p class="label rise" style="--i:1">Current version · ${esc(d.skillVersion)}</p>
+</section>
+<section class="wrap agent-grid">
+  <div class="card rise" style="--i:2">
+    <h2>Hand it to your agent</h2>
+    <p class="card__sub">Paste this into Claude Code, Codex, Cursor or any coding agent. It installs the skill and adds both servers.</p>
+    ${snippet("skill-agent", "Prompt", prompt)}
   </div>
-  <div class="snippet-wrap">${t.cards ? pluginCards(t.id) : ""}${t.snippets.map(([label, body], j) => snippet(`snip-${t.id}-${j}`, label, body)).join("")}</div>
-</div>`,
-    )
-    .join("");
-
-  const toolGroups = d.servers
-    .map(
-      (srv) => `<div class="tool-group">
-  <h3>${esc(srv.name)} <code class="endpoint-tag">/${esc(srv.id)}/mcp</code></h3>
-  <ul class="tools">${srv.tools.map((t) => `<li><code>${esc(t.name)}</code><p>${esc(t.description)}</p></li>`).join("")}</ul>
-</div>`,
-    )
-    .join("");
-
-  const guidelineCards = d.servers
-    .map((srv) => `<div class="card"><h3 class="card__title">${esc(srv.name)}</h3><pre class="guidelines">${esc(srv.guidelines)}</pre></div>`)
-    .join("");
-
-  const html = `${head("NoteBot MCP — BUTEX info and study notes for your AI", "Free MCP servers for BUTEX students: official notices, routines, results, departments and faculty, plus the NoteBot knowledge base of notes, lab reports and study plans. Works in Claude, ChatGPT, Claude Code and Cursor.")}
-<body>
-<a class="skip" href="#main">Skip to content</a>
-<header class="bar" data-bar>
-  <div class="wrap bar__inner">
-    ${brand}
-    <nav aria-label="Sections">
-      <a href="#use-cases">Use cases</a><a href="#connect">Connect</a><a href="#tools">Tools</a><a href="#skill">Skill</a><a href="#guidelines">Guidelines</a><a href="#manage">Your key</a>
-    </nav>
-    <button class="icon-btn" type="button" data-theme-toggle aria-label="Toggle dark mode">${ICON.sun}${ICON.moon}</button>
+  <div class="card rise" style="--i:3">
+    <h2>Install it yourself</h2>
+    ${snippet("skill-sh", "macOS · Linux · Git Bash", `curl -fsSL ${env.publicUrl}/skill/install.sh | sh`)}
+    ${snippet("skill-ps", "Windows PowerShell", `irm ${env.publicUrl}/skill/install.ps1 | iex`)}
+    <div class="row">
+      <a class="btn" href="/skill/butex-notebot.zip" download>${ICON.download}<span class="btn__label">Zip for claude.ai</span></a>
+      <a class="btn" href="/skill/SKILL.md">View SKILL.md</a>
+    </div>
+    <p class="hint">On claude.ai: Settings → Capabilities → Skills → Upload skill, and pick the zip.</p>
   </div>
-</header>
+</section>`;
+  return layout({ title: "Agent skill · NoteBot MCP", description: "Install the butex-notebot agent skill, or hand the setup to your coding agent.", route: "agent", body });
+}
 
-<main id="main">
-  <div class="wrap work">
-    <section class="work__intro rise" aria-labelledby="h1">
-      <div class="title-row"><h1 id="h1">Your BUTEX study desk, inside your AI.</h1></div>
-      <p class="lede">Two MCP servers for Claude, ChatGPT and your editor. <b>BUTEX MCP</b> reads the official butex.edu.bd site: notices, routines, exam schedules, results, departments, teachers, offices and halls. <b>NoteBot knowledge base</b> serves the notes, books, lab reports and question banks students share, and builds study plans from them.</p>
-      <ul class="facts">
-        <li>Free. One key, which only needs an email, works on both servers.</li>
-        <li>Works in Claude and ChatGPT on web, desktop and mobile, plus Claude Code, Cursor and VS Code.</li>
-        <li>Keeps answering from its cache when a source is down, and says when it does.</li>
-      </ul>
-    </section>
+// ── /key ────────────────────────────────────────────────────────────────────
 
-    <section class="card rise" style="--i:2" aria-labelledby="key-h" id="get-key">
-      <h2 id="key-h">Get a free key</h2>
-      <p class="card__sub">For Claude Code, Cursor and other clients that take a header. Claude and ChatGPT connectors sign you in by themselves, so you don't need one there.</p>
-      <form data-key-form novalidate>
-        <div class="field">
-          <label for="email">Email</label>
-          <input class="input" id="email" name="email" type="email" inputmode="email" autocomplete="email" placeholder="you@example.com" required>
-          <span class="hint">Lost your key? Enter the same email and we'll send it back. We may email you NoteBot updates; you can unsubscribe from any email.</span>
-        </div>
-        <p class="error" data-key-error role="alert"></p>
-        <div class="row"><button class="btn btn--primary btn--block" type="submit">${ICON.key}<span class="btn__label">Get my key</span></button></div>
-      </form>
-      <div class="key-reveal" data-key-reveal hidden>
-        <p class="notice">Copy it now. A copy is in your inbox too. It works on both servers, and the snippets below already include it.</p>
-        <div class="copy"><code id="new-key"></code>${copyBtn("#new-key")}</div>
-        ${nextSteps()}
+export function keyPage(): Response {
+  const body = `<section class="wrap page-head">
+  <h1 class="rise">Your key</h1>
+  <p class="page-head__lede rise" style="--i:1">Claude, ChatGPT and Gemini sign you in by themselves, so you only need a key for Claude Code, Cursor, Antigravity and other apps that take a header. One key works on both servers.</p>
+</section>
+<section class="wrap key-grid">
+  <div class="card rise" style="--i:2">
+    <h2>Get a free key</h2>
+    <p class="card__sub">Lost yours? Enter the same email and it's emailed back, never shown here. We may email NoteBot updates; unsubscribe from any email.</p>
+    ${keyForm("main")}
+    <div class="key-next" data-key-next hidden>
+      <p class="label">Next: add it to your app</p>
+      <div class="picker">
+        <a class="pick" href="/connect/butex"><img src="${SERVERS.butex.icon}" width="20" height="20" alt="">Set up BUTEX MCP<span aria-hidden="true">→</span></a>
+        <a class="pick" href="/connect/notebot"><img src="${SERVERS.notebot.icon}" width="20" height="20" alt="">Set up NoteBot<span aria-hidden="true">→</span></a>
       </div>
-      <div class="key-reveal" data-key-emailed hidden>
-        <p class="notice" data-key-emailed-text role="status"></p>
-        ${nextSteps()}
-      </div>
-    </section>
-
-    <section class="work__extras rise" style="--i:3" aria-label="Endpoints and latest notices">
-      <div>
-        <p class="label">Endpoints</p>
-        <div class="copy"><code id="endpoint-butex">${esc(butex)}</code>${copyBtn("#endpoint-butex")}</div>
-        <div class="copy"><code id="endpoint-notebot">${esc(notebot)}</code>${copyBtn("#endpoint-notebot")}</div>
-      </div>
-      <div>
-        <p class="label">Latest on the BUTEX board</p>
-        <div class="board" data-board aria-live="polite"><div class="sk"></div><div class="sk"></div><div class="sk"></div></div>
-      </div>
-    </section>
+    </div>
   </div>
-
-  ${useCasesSection()}
-
-  <section class="section" id="connect" aria-labelledby="connect-h">
-    <div class="wrap">
-      <div class="section__head"><h2 id="connect-h">Connect a client</h2><p>Add one or both servers. Claude and ChatGPT connect through a one-click OAuth sign-in; everything else uses your key. More detail in the <a href="https://github.com/TriptoAfsin/notebot-mcp/blob/main/docs/setup-guide.md">setup guide</a>.</p></div>
-      <p class="pick-hint">Pick the app you use. Tick each step as you go.</p>
-      <div class="tabs" role="tablist" aria-label="Clients">${tabButtons}<span class="tabs__ink" aria-hidden="true"></span></div>
-      ${panels}
+  <form class="card rise" style="--i:3" data-manage-form novalidate>
+    <h2>Check or revoke a key</h2>
+    <p class="card__sub">You need the key itself to revoke it, so nobody who only knows your email can kill your keys.</p>
+    <div class="field">
+      <label for="mkey">API key</label>
+      <input class="input" id="mkey" name="key" autocomplete="off" spellcheck="false" placeholder="nbk_f_…" required>
     </div>
-  </section>
-
-  <section class="section" id="tools" aria-labelledby="tools-h">
-    <div class="wrap">
-      <div class="section__head"><h2 id="tools-h">Tools</h2><p>Every tool is read-only. BUTEX MCP reads butex.edu.bd's own data feed and pages; NoteBot knowledge base reads the NoteBot engine. Results are cached so neither source gets hammered.</p></div>
-      ${toolGroups}
+    <p class="error" data-manage-error role="alert" style="margin-top:var(--space-xs)"></p>
+    <dl class="usage" data-usage hidden></dl>
+    <div class="row">
+      <button class="btn" type="submit" name="op" value="usage"><span class="btn__label">Check usage</span></button>
+      <button class="btn btn--danger" type="submit" name="op" value="revoke"><span class="btn__label">Revoke</span></button>
     </div>
-  </section>
-
-  <section class="section" id="skill" aria-labelledby="skill-h">
-    <div class="wrap two">
-      <div class="section__head" style="margin:0"><h2 id="skill-h">Agent skill</h2>
-        <p>A <code>SKILL.md</code> that teaches your agent both servers: which tool fits which question, how to read scanned notices, and how to build study plans. Each time it runs, it checks <code>/skill/version.json</code> and updates itself when a newer version is out.</p>
-        <p class="label" style="margin-top:var(--space-sm)">Current version · ${esc(d.skillVersion)}</p>
-      </div>
-      <div class="snippet-wrap">
-        ${snippet("skill-sh", "macOS · Linux · Git Bash", `curl -fsSL ${env.publicUrl}/skill/install.sh | sh`)}
-        ${snippet("skill-ps", "Windows PowerShell", `irm ${env.publicUrl}/skill/install.ps1 | iex`)}
-        <div class="row">
-          <a class="btn" href="/skill/butex-notebot.zip" download>${ICON.download}<span class="btn__label">Zip for claude.ai</span></a>
-          <a class="btn" href="/skill/SKILL.md">View SKILL.md</a>
-        </div>
-        <p class="hint">On claude.ai: Settings → Capabilities → Skills → Upload skill, and pick the zip.</p>
-        ${snippet("skill-agent", "Or hand it to your agent", agentPrompt())}
-      </div>
-    </div>
-  </section>
-
-  <section class="section" id="guidelines" aria-labelledby="g-h">
-    <div class="wrap">
-      <div class="section__head"><h2 id="g-h">Agent guidelines</h2><p>Each server sends these instructions to every client when it connects, so agents behave the same everywhere. They're also in <a href="https://github.com/TriptoAfsin/notebot-mcp/blob/main/AGENTS.md">AGENTS.md</a>.</p></div>
-      <div class="two">${guidelineCards}</div>
-    </div>
-  </section>
-
-  <section class="section" id="manage" aria-labelledby="m-h">
-    <div class="wrap two">
-      <div class="section__head" style="margin:0"><h2 id="m-h">Your key</h2><p>Paste a key to see its usage, or revoke it if it leaked. You need the key itself to revoke it, so nobody who only knows your email can kill your keys. Lost it? Request it again with the same email and it's sent to your inbox.</p></div>
-      <form class="card" data-manage-form novalidate>
-        <div class="field" style="margin-top:0">
-          <label for="mkey">API key</label>
-          <input class="input" id="mkey" name="key" autocomplete="off" spellcheck="false" placeholder="nbk_f_…" required>
-        </div>
-        <p class="error" data-manage-error role="alert" style="margin-top:var(--space-xs)"></p>
-        <dl class="usage" data-usage hidden></dl>
-        <div class="row">
-          <button class="btn" type="submit" name="op" value="usage"><span class="btn__label">Check usage</span></button>
-          <button class="btn btn--danger" type="submit" name="op" value="revoke"><span class="btn__label">Revoke</span></button>
-        </div>
-      </form>
-    </div>
-  </section>
-</main>
-
-<footer class="foot">
-  <div class="wrap">
-    <span>NoteBot MCP v${esc(VERSION)}</span>
-    <span>A student project. Not an official BUTEX service. Notices come from <a href="https://www.butex.edu.bd">butex.edu.bd</a>; notes from the NoteBot community.</span>
-    <a href="https://butexnotebot.com">butexnotebot.com</a>
-    <a href="/health">Status</a>
-  </div>
-</footer>
-<script src="/app.js?v=${ASSET_VERSION}" defer></script>
-</body>
-</html>`;
-  return new Response(html, { headers: { "content-type": "text/html; charset=utf-8", "cache-control": "public, max-age=300" } });
+  </form>
+</section>`;
+  return layout({ title: "Your key · NoteBot MCP", description: "Get a free NoteBot MCP key, or check and revoke one.", route: "key", body });
 }
 
 /** Small single-card page for emailed links (rotate, unsubscribe). */
@@ -408,7 +294,7 @@ export function messagePage(o: { title: string; body: string; key?: string; form
     : "";
   const html = `${head(`${o.title} · NoteBot MCP`, o.title)}
 <body>
-<main class="consent"><div class="card rise">${brand}<h1>${esc(o.title)}</h1><p>${esc(o.body)}</p>${key}${form}<p class="fine"><a href="/">Back to the dashboard</a></p></div></main>
+<main class="consent"><div class="card rise">${brand}<h1>${esc(o.title)}</h1><p>${esc(o.body)}</p>${key}${form}<p class="fine"><a href="/">Back to NoteBot MCP</a></p></div></main>
 <script src="/app.js?v=${ASSET_VERSION}" defer></script>
 </body></html>`;
   return new Response(html, {
@@ -418,8 +304,6 @@ export function messagePage(o: { title: string; body: string; key?: string; form
       "cache-control": "no-store",
       "x-frame-options": "DENY",
       "content-security-policy": "frame-ancestors 'none'",
-      // keep the one-time token in the URL from leaking to linked sites
-      "referrer-policy": "no-referrer",
     },
   });
 }

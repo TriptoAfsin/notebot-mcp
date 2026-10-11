@@ -17,11 +17,19 @@ Read that file first. Everything there applies here unless amended below.
 
 ## Amendments for this app
 
-- **Page family: Workbench.** The dashboard is a tool, not a landing page. Order:
-  title + lede → *Get a free key* card (right column on desktop, second on mobile) →
-  endpoint + live board → Connect (tabs) → Tools (index rows) → Skill → Guidelines → Your key.
-- **Nav:** a flush inline bar (wordmark + `MCP` mono tag, anchor links, theme toggle).
-  There's no ⌘K palette; one page doesn't need one. Links hide below 52 rem.
+- **Routes, not one long page.** `/` home (Split Studio: hero → two server cards side by side →
+  four-fact row → live board), `/connect/<butex|notebot>` (the setup guide as a page), `/ask`,
+  `/tools`, `/agent`, `/key`. Old `/#section` anchors redirect client-side.
+- **Setup sheet.** On home, "Set up" opens the server's guide in a `<dialog>` (bottom sheet on
+  phones, centred panel on desktop), deep-linkable as `/?setup=<server>`, Back closes it.
+  Without JS the same link goes to `/connect/<server>`.
+- **Guides** are one renderer (`src/web/guide.ts`) for sheet and page: app chips → checklist
+  with schematic mockups → copyable form values / inline key form / snippets.
+- **Nav:** a flush inline bar (wordmark + `MCP` mono tag, route links, a small primary "Set up",
+  theme toggle). Below 52 rem the links become a scrollable second row; they never hide.
+- **Motion:** cross-document view transitions between routes (header holds; page lifts out
+  160 ms, settles in 320 ms; server icon and name morph from card to `/connect` page). One
+  entrance per route. Attention pulses run three times, never forever.
 - **Footer:** Ft2 inline single line.
 - **Consent page:** one centred card, at most 26 rem wide, on paper. Same tokens.
 - **Icons:** Lucide only (inline SVG, 1.5 stroke). There is no dimensional set here.

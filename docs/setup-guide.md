@@ -38,6 +38,28 @@ Custom MCP servers need a paid plan (Plus, Pro, Business, Enterprise or Edu). On
 
 ChatGPT renamed these menus in 2026: the old **Apps & Connectors** page is now **Plugins**, and Developer mode moved to **Security and login**. If your menus look different, search Settings for "Developer mode" and look for Plugins or Connectors.
 
+## 2b. Gemini (gemini.google.com)
+
+Custom apps need a personal Google account (not work or school), age 18+, English, and Keep Activity on. Google is rolling it out starting in the US.
+
+1. Settings → **Connected Apps** (or **Personal Intelligence** → **Connected Apps**).
+2. Under **Custom apps**, press **Add a custom app** and paste `https://ai.butexnotebot.com/butex/mcp`. Skip **Advanced features**.
+3. Press **Next**, then approve with your email on the NoteBot page.
+4. Type **@** in a prompt and pick it. It also works in the Gemini app once added on the web.
+5. Repeat with `https://ai.butexnotebot.com/notebot/mcp`.
+
+## 2c. Google Antigravity
+
+1. Open the MCP config: Antigravity IDE → **…** at the top of the agent panel → **MCP Servers** → **Manage MCP Servers** → **View raw config**. Antigravity 2.0 → Settings → **Customizations** → **Installed MCP Servers**. The file is `~/.gemini/config/mcp_config.json`.
+2. Add (Antigravity wants `serverUrl`, not `url`; paste the real key, `${VAR}` isn't expanded):
+   ```json
+   { "mcpServers": {
+       "butex":   { "serverUrl": "https://ai.butexnotebot.com/butex/mcp",   "headers": { "Authorization": "Bearer YOUR_KEY" } },
+       "notebot": { "serverUrl": "https://ai.butexnotebot.com/notebot/mcp", "headers": { "Authorization": "Bearer YOUR_KEY" } } } }
+   ```
+   Or leave out `headers` and use Settings → **Customizations** → **Authenticate** to sign in.
+3. Save, then refresh (or restart the IDE).
+
 ## 3. Get a key (for Claude Code, Cursor, VS Code and others)
 
 1. Go to **https://ai.butexnotebot.com**, enter your email under **Get a free key**, and copy the key that appears. A copy is emailed to you as well.

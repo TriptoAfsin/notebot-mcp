@@ -1,4 +1,4 @@
-// NoteBot MCP dashboard — progressive enhancement only; the page reads fine without it.
+// NoteBot MCP: progressive enhancement only. Every page reads fine without it.
 (() => {
   const $ = (s, el = document) => el.querySelector(s);
   const $$ = (s, el = document) => [...el.querySelectorAll(s)];
@@ -6,6 +6,13 @@
     get: (k) => { try { return localStorage.getItem(k); } catch { return null; } },
     set: (k, v) => { try { localStorage.setItem(k, v); } catch {} },
   };
+  const session = {
+    get: (k) => { try { return sessionStorage.getItem(k); } catch { return null; } },
+    set: (k, v) => { try { sessionStorage.setItem(k, v); } catch {} },
+    del: (k) => { try { sessionStorage.removeItem(k); } catch {} },
+  };
+  const reduced = matchMedia("(prefers-reduced-motion: reduce)");
+  const restart = (el, cls) => { el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls); };
 
   // Theme
   const root = document.documentElement;
@@ -21,109 +28,95 @@
   addEventListener("scroll", onScroll, { passive: true });
   onScroll();
 
-  // Tabs (roving tabindex, arrow keys)
-  const tabs = $$('[role="tab"]');
-  const tablist = $(".tabs");
-  const reduced = matchMedia("(prefers-reduced-motion: reduce)");
-  // Sliding underline: one element moved with transform, so it shows where you came from.
-  const moveInk = () => {
-    const on = tabs.find((t) => t.getAttribute("aria-selected") === "true");
-    if (!on || !tablist) return;
-    tablist.style.setProperty("--ink-x", `${on.offsetLeft}px`);
-    tablist.style.setProperty("--ink-w", String(on.offsetWidth / 100));
+  // Old single-page anchors (emails, bookmarks) now live on their own routes.
+  if (document.body.dataset.route === "home") {
+    const legacy = { "#use-cases": "/ask", "#tools": "/tools", "#skill": "/agent", "#guidelines": "/tools", "#manage": "/key", "#get-key": "/key" };
+    if (legacy[location.hash]) location.replace(legacy[location.hash]);
+    if (location.hash === "#connect") history.replaceState(null, "", "/#choose");
+  }
+  const flashChoose = () => {
+    const c = $("#choose");
+    if (!c) return;
+    c.scrollIntoView({ behavior: reduced.matches ? "auto" : "smooth", block: "start" });
+    restart(c, "is-flash");
   };
-  const select = (tab, focus, animate = true) => {
-    const was = tabs.find((t) => t.getAttribute("aria-selected") === "true");
-    tabs.forEach((t) => {
-      const on = t === tab;
-      t.setAttribute("aria-selected", String(on));
-      t.tabIndex = on ? 0 : -1;
-      $("#" + t.getAttribute("aria-controls")).hidden = !on;
-    });
-    if (animate && was !== tab) {
-      const panel = $("#" + tab.getAttribute("aria-controls"));
-      panel.classList.remove("is-entering"); void panel.offsetWidth; panel.classList.add("is-entering");
-    }
-    moveInk();
-    // keep the chosen tab visible inside the strip on phones, without scrolling the page
-    if (tablist) {
-      const l = tab.offsetLeft, r = l + tab.offsetWidth;
-      if (l < tablist.scrollLeft || r > tablist.scrollLeft + tablist.clientWidth) {
-        tablist.scrollTo({ left: Math.max(0, l - 16), behavior: reduced.matches ? "auto" : "smooth" });
-      }
-    }
-    if (focus) tab.focus();
-    store.set("nb-tab", tab.id);
-  };
-  tabs.forEach((t, i) => {
-    t.addEventListener("click", () => select(t));
-    t.addEventListener("keydown", (e) => {
-      const d = e.key === "ArrowRight" ? 1 : e.key === "ArrowLeft" ? -1 : 0;
-      if (d) { e.preventDefault(); select(tabs[(i + d + tabs.length) % tabs.length], true); }
-    });
+  if (location.hash === "#choose") requestAnimationFrame(flashChoose);
+  document.addEventListener("click", (e) => {
+    const a = e.target.closest('a[href="/#choose"]');
+    if (a && document.body.dataset.route === "home") { e.preventDefault(); history.replaceState(null, "", "/#choose"); flashChoose(); }
   });
-  const saved = store.get("nb-tab");
-  if (saved && $("#" + saved)) select($("#" + saved), false, false);
-  if (tablist) {
-    tablist.classList.add("has-ink");
-    moveInk();
-    requestAnimationFrame(() => tablist.classList.add("ink-ready"));
-    addEventListener("resize", moveInk, { passive: true });
-    document.fonts?.ready.then(moveInk);
+
+  // ── Guides: app chips (tabs) + checklist ───────────────────────────────
+  const wantedApp = new URLSearchParams(location.search).get("app") || store.get("nb-app");
+
+  function initGuide(scope) {
+    $$("[data-tabs]", scope).forEach((group) => {
+      const tabs = $$('[role="tab"]', group);
+      const select = (tab, focus, animate = true) => {
+        const was = tabs.find((t) => t.getAttribute("aria-selected") === "true");
+        tabs.forEach((t) => {
+          const on = t === tab;
+          t.setAttribute("aria-selected", String(on));
+          t.tabIndex = on ? 0 : -1;
+          $("#" + t.getAttribute("aria-controls"), group).hidden = !on;
+        });
+        if (animate && was !== tab) restart($("#" + tab.getAttribute("aria-controls"), group), "is-entering");
+        if (focus) tab.focus();
+        store.set("nb-app", tab.dataset.app);
+      };
+      tabs.forEach((t, i) => {
+        t.addEventListener("click", () => select(t));
+        t.addEventListener("keydown", (e) => {
+          const d = e.key === "ArrowRight" ? 1 : e.key === "ArrowLeft" ? -1 : 0;
+          if (d) { e.preventDefault(); select(tabs[(i + d + tabs.length) % tabs.length], true); }
+        });
+      });
+      const start = tabs.find((t) => t.dataset.app === wantedApp);
+      if (start) select(start, false, false);
+    });
+
+    // Tick steps as you go; progress is remembered on this device.
+    $$("[data-guide]", scope).forEach((guide) => {
+      const ticks = $$(".tick", guide);
+      const key = `nb-steps-v3-${guide.dataset.guide}-${ticks.length}`;
+      const bar = $("[data-progress-bar]", guide);
+      const text = $("[data-progress-text]", guide);
+      const done = $("[data-done]", guide);
+      let state = [];
+      try { state = JSON.parse(store.get(key) || "[]"); } catch {}
+      const render = (celebrate) => {
+        const n = ticks.filter((t, i) => { const on = !!state[i]; t.setAttribute("aria-pressed", String(on)); return on; }).length;
+        bar.style.setProperty("--p", String(n / ticks.length));
+        text.textContent = `${n} of ${ticks.length} done`;
+        const all = n === ticks.length;
+        if (all && done.hidden && celebrate) restart(done, "is-in");
+        done.hidden = !all;
+      };
+      ticks.forEach((t, i) => t.addEventListener("click", () => {
+        state[i] = !state[i];
+        store.set(key, JSON.stringify(state));
+        render(true);
+      }));
+      render(false);
+    });
+
+    $$("[data-key-form]", scope).forEach((f) => { f.dataset.born = String(performance.now()); });
+    const k = session.get("nb-key");
+    if (k) fillKey(k);
   }
 
-  // Checklist: tick steps as you go; progress is remembered on this device.
-  $$("[data-guide]").forEach((guide) => {
-    const key = "nb-steps-v2-" + guide.dataset.guide + "-" + $$(".tick", guide).length;
-    const ticks = $$(".tick", guide);
-    const bar = $("[data-progress-bar]", guide);
-    const text = $("[data-progress-text]", guide);
-    const done = $("[data-done]", guide);
-    let state = [];
-    try { state = JSON.parse(store.get(key) || "[]"); } catch {}
-    const render = (celebrate) => {
-      const n = ticks.filter((t, i) => { const on = !!state[i]; t.setAttribute("aria-pressed", String(on)); return on; }).length;
-      bar.style.setProperty("--p", String(n / ticks.length));
-      text.textContent = `${n} of ${ticks.length} done`;
-      const all = n === ticks.length;
-      if (all && done.hidden && celebrate) { done.classList.remove("is-in"); void done.offsetWidth; done.classList.add("is-in"); }
-      done.hidden = !all;
-    };
-    ticks.forEach((t, i) => t.addEventListener("click", () => {
-      state[i] = !state[i];
-      store.set(key, JSON.stringify(state));
-      render(true);
-    }));
-    render(false);
-  });
-
-  // "Show me the steps for…": jump to the right tab and mark where you landed.
-  document.addEventListener("click", (e) => {
-    const pick = e.target.closest("[data-pick]");
-    if (!pick) return;
-    const tab = $("#tab-" + pick.dataset.pick);
-    if (!tab) return;
-    e.preventDefault();
-    select(tab, false);
-    $("#connect").scrollIntoView({ behavior: reduced.matches ? "auto" : "smooth", block: "start" });
-    const panel = $("#" + tab.getAttribute("aria-controls"));
-    panel.classList.remove("is-landed"); void panel.offsetWidth; panel.classList.add("is-landed");
-    history.replaceState(null, "", "#connect");
-  });
-
-  // Copy buttons — silent success: the label flips for a moment, no toast.
+  // ── Copy: silent success, the icon turns into a tick and the value flashes ─
   document.addEventListener("click", async (e) => {
     const btn = e.target.closest("[data-copy]");
     if (!btn) return;
-    const src = $(btn.dataset.copy);
+    const src = document.querySelector(btn.dataset.copy);
     if (!src) return;
     const label = $(".btn__label", btn);
     try {
       await navigator.clipboard.writeText(src.textContent.trim());
       btn.dataset.state = "success";
       if (label) label.textContent = "Copied";
-      const box = src.closest(".copy") || src;
-      box.classList.remove("is-copied"); void box.offsetWidth; box.classList.add("is-copied");
+      restart(src.closest(".copy") || src, "is-copied");
     } catch {
       const r = document.createRange(); r.selectNodeContents(src);
       const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r);
@@ -132,12 +125,12 @@
     setTimeout(() => { delete btn.dataset.state; if (label) label.textContent = "Copy"; }, 1600);
   });
 
-  // Fill snippets with a key once we have one (kept only for this tab session)
-  const fillKey = (key) => {
+  // Snippets get the key once we have one (kept only for this browser tab).
+  function fillKey(key) {
     $$("[data-template]").forEach((el) => { el.textContent = el.dataset.template.replaceAll("YOUR_KEY", key); });
-  };
-  const sessionKey = (() => { try { return sessionStorage.getItem("nb-key"); } catch { return null; } })();
-  if (sessionKey) fillKey(sessionKey);
+    const m = $("#mkey");
+    if (m && !m.value) m.value = key;
+  }
 
   const setLoading = (btn, on) => {
     if (!btn) return;
@@ -159,11 +152,13 @@
     return data;
   }
 
-  // Create key
-  const form = $("[data-key-form]");
-  form?.addEventListener("submit", async (e) => {
+  // ── Key forms (any number per page) ─────────────────────────────────────
+  document.addEventListener("submit", async (e) => {
+    const form = e.target.closest("[data-key-form]");
+    if (!form) return;
     e.preventDefault();
-    const email = $("#email", form);
+    const scope = form.closest("[data-key-scope]") || document;
+    const email = $('input[name="email"]', form);
     const err = $("[data-key-error]", form);
     const btn = $('button[type="submit"]', form);
     err.textContent = "";
@@ -176,23 +171,28 @@
     }
     setLoading(btn, true);
     try {
-      const res = await post("/api/keys", { email: email.value.trim() });
+      const res = await post("/api/keys", {
+        email: email.value.trim(),
+        website: $('input[name="website"]', form)?.value ?? "", // honeypot: people never see it
+        elapsed: Math.round(performance.now() - Number(form.dataset.born || 0)),
+      });
       form.hidden = true;
       if (res.status === "emailed") {
         // existing address: the key goes to the inbox, never to the screen
-        $("[data-key-emailed-text]").textContent = res.message;
-        $("[data-key-emailed]").hidden = false;
-        $("[data-key-emailed]").classList.add("is-in");
-        return;
+        const box = $("[data-key-emailed]", scope);
+        $("[data-key-emailed-text]", box).textContent = res.message;
+        box.hidden = false;
+        restart(box, "is-in");
+      } else {
+        const reveal = $("[data-key-reveal]", scope);
+        $("[data-new-key]", reveal).textContent = res.key;
+        reveal.hidden = false;
+        restart(reveal, "is-in");
+        session.set("nb-key", res.key);
+        fillKey(res.key);
       }
-      const key = res.key;
-      $("#new-key").textContent = key;
-      const reveal = $("[data-key-reveal]");
-      reveal.hidden = false;
-      reveal.classList.add("is-in");
-      fillKey(key);
-      try { sessionStorage.setItem("nb-key", key); } catch {}
-      $("#mkey").value = key;
+      const next = $("[data-key-next]");
+      if (next) { next.hidden = false; restart(next, "is-in"); }
     } catch (ex) {
       err.textContent = ex.message;
     } finally {
@@ -200,7 +200,7 @@
     }
   });
 
-  // Manage key
+  // ── Manage key ──────────────────────────────────────────────────────────
   const mform = $("[data-manage-form]");
   mform?.addEventListener("submit", async (e) => {
     e.preventDefault();
@@ -216,9 +216,9 @@
         await post("/api/keys/revoke", { key });
         out.hidden = false;
         const dt = document.createElement("dt"); dt.textContent = "Status";
-        const dd = document.createElement("dd"); dd.textContent = "Revoked. Clients using it will stop working within a few minutes.";
+        const dd = document.createElement("dd"); dd.textContent = "Revoked. Apps using it stop working within a few minutes.";
         out.replaceChildren(dt, dd);
-        try { sessionStorage.removeItem("nb-key"); } catch {}
+        session.del("nb-key");
       } else {
         const u = await post("/api/keys/usage", { key });
         const fmt = (d) => (d ? new Date(d).toLocaleString() : "—");
@@ -248,7 +248,79 @@
     }
   });
 
-  // Live board: three newest notices, from the server's cache
+  // ── Setup sheet: the guide opens over the chooser, deep-linkable via ?setup= ─
+  const sheet = $("[data-sheet]");
+  if (sheet && typeof sheet.showModal === "function") {
+    const body = $("[data-sheet-body]", sheet);
+    let pushed = false;
+
+    const open = (id, push = true) => {
+      const tpl = $(`#tpl-${id}`);
+      if (!tpl) return false;
+      body.replaceChildren(tpl.content.cloneNode(true));
+      $("[data-sheet-title]", sheet).textContent = `Set up ${tpl.dataset.name}`;
+      $("[data-sheet-icon]", sheet).src = tpl.dataset.icon;
+      $("[data-sheet-full]", sheet).href = `/connect/${id}`;
+      initGuide(body);
+      sheet.classList.remove("is-closing");
+      sheet.showModal();
+      document.body.classList.add("has-sheet");
+      body.scrollTop = 0;
+      requestAnimationFrame(() => requestAnimationFrame(() => sheet.classList.add("is-open")));
+      if (push) { history.pushState({ sheet: id }, "", `/?setup=${id}`); pushed = true; }
+      return true;
+    };
+
+    const close = (fromHistory = false) => {
+      if (!sheet.open || sheet.classList.contains("is-closing")) return;
+      sheet.classList.remove("is-open");
+      sheet.classList.add("is-closing");
+      setTimeout(() => {
+        sheet.close();
+        sheet.classList.remove("is-closing");
+        document.body.classList.remove("has-sheet");
+      }, reduced.matches ? 0 : 190);
+      if (!fromHistory) {
+        if (pushed) { pushed = false; history.back(); }
+        else history.replaceState(null, "", "/");
+      }
+    };
+
+    document.addEventListener("click", (e) => {
+      const a = e.target.closest("[data-setup]");
+      if (!a || e.metaKey || e.ctrlKey || e.shiftKey || e.button > 0) return;
+      if (open(a.dataset.setup)) e.preventDefault();
+    });
+    $("[data-sheet-close]", sheet).addEventListener("click", () => close());
+    sheet.addEventListener("cancel", (e) => { e.preventDefault(); close(); });
+    // a click on the dim area (the dialog box itself, outside the panel) closes it
+    sheet.addEventListener("click", (e) => { if (e.target === sheet) close(); });
+    addEventListener("popstate", (e) => {
+      if (e.state?.sheet) open(e.state.sheet, false);
+      else if (sheet.open) { pushed = false; close(true); }
+    });
+
+    const deep = new URLSearchParams(location.search).get("setup");
+    if (deep === "butex" || deep === "notebot") open(deep, false);
+  }
+
+  // ── /ask filter ─────────────────────────────────────────────────────────
+  const filter = $("[data-filter]");
+  if (filter) {
+    const items = $$("[data-filter-item]");
+    const apply = (v) => {
+      $$("[data-filter-btn]", filter).forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.filterBtn === v)));
+      items.forEach((it) => {
+        const show = v === "all" || it.dataset.filterItem === v;
+        if (show) { it.hidden = false; requestAnimationFrame(() => it.classList.remove("is-out")); }
+        else { it.classList.add("is-out"); setTimeout(() => { if (it.classList.contains("is-out")) it.hidden = true; }, reduced.matches ? 0 : 200); }
+      });
+    };
+    filter.addEventListener("click", (e) => { const b = e.target.closest("[data-filter-btn]"); if (b) apply(b.dataset.filterBtn); });
+    if (location.hash === "#butex" || location.hash === "#notebot") apply(location.hash.slice(1));
+  }
+
+  // ── Live board: three newest notices, from the server's cache ───────────
   const board = $("[data-board]");
   if (board) {
     fetch("/api/latest")
@@ -265,6 +337,8 @@
           }),
         );
       })
-      .catch(() => { board.closest("div").hidden = true; });
+      .catch(() => { board.closest("section")?.setAttribute("hidden", ""); });
   }
+
+  initGuide(document);
 })();

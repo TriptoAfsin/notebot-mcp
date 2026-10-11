@@ -3,7 +3,7 @@ name: butex-notebot
 description: Help BUTEX (Bangladesh University of Textiles) students through two NoteBot MCP servers — the official butex.edu.bd website (notices, class routines, exam schedules, results, admission, plus departments, teachers and their research, offices, halls and programs) and the NoteBot knowledge base (notes, books, lab reports, question banks, syllabus, study plans and recommendations). Use whenever the user mentions BUTEX, NoteBot, butex.edu.bd, a BUTEX level/term (e.g. L2-T1), a BUTEX subject (Math-I, YM-I, FM-I…) or department (yarn, fabric, wet process, apparel, TFD, TEM, TMDM, IPE, DCE, ESE), or asks for notes, lab reports, a study plan, a BUTEX teacher, office or hall, or "is there a new notice / routine / result" in a BUTEX context.
 ---
 
-<!-- butex-notebot skill version: 1.2.1 -->
+<!-- butex-notebot skill version: 1.2.2 -->
 
 # BUTEX NoteBot
 
@@ -26,12 +26,12 @@ installs just print a note. If it reports `UPDATED`, re-read this SKILL.md befor
 
 If you cannot run commands, call the `butex_status` tool: it reports `latestSkillVersion`.
 If that is newer than the version in the comment above, tell the user once that an update
-is available at https://ai.butexnotebot.com/#skill, then carry on.
+is available at https://ai.butexnotebot.com/agent, then carry on.
 
 ## 1. Make sure the tools are connected
 
 If the tools you need aren't available, don't guess answers from memory: give the user the
-setup for their client from https://ai.butexnotebot.com/#connect (Claude/ChatGPT: add a
+setup for their client from https://ai.butexnotebot.com/connect (Claude/ChatGPT: add a
 custom connector per server URL above and sign in with an email; Claude Code:
 `claude mcp add --transport http butex https://ai.butexnotebot.com/butex/mcp` and
 `claude mcp add --transport http notebot https://ai.butexnotebot.com/notebot/mcp`).

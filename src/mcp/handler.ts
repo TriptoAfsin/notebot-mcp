@@ -80,7 +80,7 @@ function unauthorized(resource: Resource, message: string, status = 401): Respon
 
 export async function handleMcp(req: Request, resource: Resource): Promise<Response> {
   if (req.method === "GET" && !req.headers.get("accept")?.includes("text/event-stream")) {
-    return Response.redirect(`${env.publicUrl}/#connect`, 302);
+    return Response.redirect(`${env.publicUrl}/connect/${resource === "notebot" ? "notebot" : "butex"}`, 302);
   }
   if (req.method === "GET" || req.method === "DELETE") {
     // stateless server: no standalone SSE stream and no sessions to delete

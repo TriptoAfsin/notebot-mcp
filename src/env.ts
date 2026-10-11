@@ -41,6 +41,11 @@ export const env = {
   mailFrom: e.MAIL_FROM ?? (e.RESEND_FROM_EMAIL ? `${e.RESEND_FROM_NAME ?? "NoteBot"} <${e.RESEND_FROM_EMAIL}>` : "NoteBot <notebot@t21.dev>"),
   mailReplyTo: e.MAIL_REPLY_TO ?? "",
   recoveryEmailsPerHour: int("RECOVERY_EMAILS_PER_HOUR", 3),
+  /** Caps on outgoing mail, so the key form can't be used to spam other people's inboxes. */
+  emailsPerIpHour: int("EMAILS_PER_IP_HOUR", 5),
+  emailsPerIpDay: int("EMAILS_PER_IP_DAY", 20),
+  emailsPerAddressDay: int("EMAILS_PER_ADDRESS_DAY", 6),
+  emailsGlobalHour: int("EMAILS_GLOBAL_HOUR", 200),
 
   freePerMinute: int("FREE_RATE_PER_MINUTE", 60),
   freePerDay: int("FREE_RATE_PER_DAY", 5000),

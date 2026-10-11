@@ -17,7 +17,7 @@ import { NOTEBOT_INSTRUCTIONS, registerNotebotTools } from "./notebot/tools";
 import { authorizeGet, authorizePost, authServerMetadata, protectedResourceMetadata, register, token } from "./oauth/oauth";
 import { SKILL_VERSION, skillRoute } from "./skill";
 import { VERSION } from "./version";
-import { agentSetup, dashboardPage, messagePage, type ToolDoc } from "./web/dashboard";
+import { agentPage, agentSetup, askPage, connectPage, dashboardPage, keyPage, messagePage, toolsPage, type ToolDoc } from "./web/dashboard";
 
 const PUBLIC_DIR = join(import.meta.dir, "..", "public");
 const STATIC = new Set(["/mcp-icon-butex.png", "/mcp-icon-notebot.png", "/app.css", "/app.js", "/icon.png", "/favicon.ico", "/apple-touch-icon.png"]);
@@ -111,8 +111,8 @@ async function route(req: Request, server: Bun.Server<undefined>): Promise<Respo
 
   // Dashboard API
   if (path === "/api/keys" && method === "POST") {
-    const { email } = await readJson<{ email: string }>(req);
-    const r = await requestKey({ email: String(email ?? ""), ip });
+    const { email, website, elapsed } = await readJson<{ email: string; website: string; elapsed: number }>(req);
+    const r = await requestKey({ email: String(email ?? ""), ip, website: typeof website === "string" ? website : "", elapsed: typeof elapsed === "number" ? elapsed : undefined });
     if (!r.ok) return json({ error: r.error }, { status: r.status });
     return r.kind === "created"
       ? json({ status: "created", key: r.key, id: r.id, endpoints: [`${env.publicUrl}/butex/mcp`, `${env.publicUrl}/notebot/mcp`] }, { status: 201 })
@@ -197,12 +197,21 @@ async function route(req: Request, server: Bun.Server<undefined>): Promise<Respo
     if (r) return withCors(r);
   }
 
-  if (path === "/" && method === "GET") return dashboardPage(dashboardData);
+  if (method === "GET") {
+    if (path === "/") return dashboardPage(dashboardData);
+    if (path === "/connect") return Response.redirect(`${env.publicUrl}/#choose`, 302);
+    const c = /^\/connect\/(butex|notebot)$/.exec(path);
+    if (c) return connectPage(dashboardData, c[1] as "butex" | "notebot", url.searchParams.get("app") ?? undefined);
+    if (path === "/ask") return askPage();
+    if (path === "/tools") return toolsPage(dashboardData);
+    if (path === "/agent") return agentPage(dashboardData);
+    if (path === "/key") return keyPage();
+  }
   if (path === "/robots.txt") return new Response("User-agent: *\nAllow: /\nDisallow: /oauth/\nDisallow: /api/\nDisallow: /keys/\n");
   if (path === "/setup.md") return new Response(agentSetup(), { headers: { "content-type": "text/markdown; charset=utf-8" } });
   if (path === "/llms.txt") {
     return new Response(
-      `# NoteBot MCP\n\nMCP servers for BUTEX (Bangladesh University of Textiles) students.\n\n- BUTEX MCP (official notices, departments, faculty, offices): ${env.publicUrl}/butex/mcp\n- NoteBot knowledge base: ${env.publicUrl}/notebot/mcp\n- Streamable HTTP; OAuth or Bearer key. Free key: ${env.publicUrl}/#get-key\n- Agent skill: ${env.publicUrl}/skill/SKILL.md\n- Agent setup steps: ${env.publicUrl}/setup.md\n\n## BUTEX MCP\n${BUTEX_INSTRUCTIONS}\n\n## NoteBot knowledge base\n${NOTEBOT_INSTRUCTIONS}\n`,
+      `# NoteBot MCP\n\nMCP servers for BUTEX (Bangladesh University of Textiles) students.\n\n- BUTEX MCP (official notices, departments, faculty, offices): ${env.publicUrl}/butex/mcp\n- NoteBot knowledge base: ${env.publicUrl}/notebot/mcp\n- Streamable HTTP; OAuth or Bearer key. Free key: ${env.publicUrl}/key\n- Agent skill: ${env.publicUrl}/skill/SKILL.md\n- Agent setup steps: ${env.publicUrl}/setup.md\n\n## BUTEX MCP\n${BUTEX_INSTRUCTIONS}\n\n## NoteBot knowledge base\n${NOTEBOT_INSTRUCTIONS}\n`,
       { headers: { "content-type": "text/plain; charset=utf-8" } },
     );
   }
