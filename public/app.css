@@ -236,10 +236,10 @@ code, kbd, pre { font-family: var(--font-mono); font-size: 0.875em; }
   font: inherit; font-size: var(--text-sm); font-weight: 500; white-space: nowrap; text-decoration: none;
   border-radius: var(--radius); border: 1px solid var(--color-rule-2);
   background: var(--color-paper-2); color: var(--color-ink); cursor: pointer;
-  transition: background-color var(--dur-micro) var(--ease-out), border-color var(--dur-micro) var(--ease-out);
+  transition: background-color var(--dur-micro) var(--ease-out), border-color var(--dur-micro) var(--ease-out), transform 160ms var(--ease-out);
 }
 .btn:hover { background: var(--color-paper-3); }
-.btn:active { transform: translateY(1px); }
+.btn:active { transform: scale(0.97); }
 .btn:disabled, .btn[aria-disabled="true"] { opacity: 0.55; cursor: not-allowed; transform: none; }
 .btn svg { width: 16px; height: 16px; flex: none; }
 .btn--primary { background: var(--color-accent); border-color: var(--color-accent); color: var(--color-accent-ink); }
@@ -272,7 +272,7 @@ code, kbd, pre { font-family: var(--font-mono); font-size: 0.875em; }
 .section__head p { color: var(--color-ink-2); }
 
 /* Tabs */
-.tabs { display: flex; gap: var(--space-3xs); overflow-x: auto; scrollbar-width: none; border-bottom: 1px solid var(--color-rule); margin-bottom: var(--space-md); }
+.tabs { position: relative; display: flex; gap: var(--space-3xs); overflow-x: auto; scrollbar-width: none; border-bottom: 1px solid var(--color-rule); margin-bottom: var(--space-md); }
 .tabs::-webkit-scrollbar { display: none; }
 .tab {
   flex: none; white-space: nowrap; min-height: 2.75rem; padding: 0 var(--space-sm);
@@ -281,6 +281,7 @@ code, kbd, pre { font-family: var(--font-mono); font-size: 0.875em; }
 }
 .tab:hover { color: var(--color-ink); }
 .tab[aria-selected="true"] { color: var(--color-ink); box-shadow: inset 0 -2px 0 var(--color-accent); }
+.tabs.has-ink .tab[aria-selected="true"] { box-shadow: none; }
 .panel { display: grid; gap: var(--space-md); }
 .panel[hidden] { display: none; }
 @media (min-width: 60rem) {
@@ -375,3 +376,82 @@ pre.snippet {
 .pfield { display: grid; gap: var(--space-3xs); min-width: 0; }
 .pfield .copy code { overflow-wrap: anywhere; white-space: normal; }
 .btn--sm { padding: 6px 12px; font-size: var(--text-sm); white-space: nowrap; }
+
+/* ---------- Guided setup (non-technical first) ---------- */
+.pick-hint { color: var(--color-muted); font-size: var(--text-sm); margin-bottom: var(--space-2xs); }
+
+/* Tab underline that slides between tabs: one element, transform only. */
+.tabs__ink {
+  position: absolute; left: 0; bottom: 0; width: 100px; height: 2px; background: var(--color-accent);
+  transform-origin: 0 0; transform: translateX(var(--ink-x, 0)) scaleX(var(--ink-w, 0));
+  pointer-events: none; display: none;
+}
+.tabs.has-ink .tabs__ink { display: block; }
+.tabs.ink-ready .tabs__ink { transition: transform var(--dur-short) var(--ease-in-out); }
+
+/* Checklist steps */
+.guide { display: grid; gap: var(--space-sm); min-width: 0; }
+.progress { display: flex; align-items: center; gap: var(--space-xs); font-family: var(--font-mono); font-size: var(--text-xs); color: var(--color-muted); }
+.progress__track { flex: 1; max-width: 12rem; height: 4px; border-radius: 999px; background: var(--color-paper-3); overflow: hidden; }
+.progress__track i { display: block; height: 100%; width: 100%; background: var(--color-success); border-radius: inherit; transform-origin: 0 0; transform: scaleX(var(--p, 0)); transition: transform 320ms var(--ease-out); }
+.steps--check { list-style: none; padding-left: 0; counter-reset: step; }
+.steps--check li { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--space-xs); align-items: start; padding-left: 0; counter-increment: step; }
+.tick {
+  position: relative; flex: none; width: 1.75rem; height: 1.75rem; margin-top: -1px; padding: 0;
+  display: grid; place-items: center; border-radius: 999px; cursor: pointer;
+  border: 1px solid var(--color-rule-2); background: var(--color-paper); color: var(--color-muted);
+  font: 500 var(--text-xs)/1 var(--font-mono);
+  transition: background-color var(--dur-micro) var(--ease-out), border-color var(--dur-micro) var(--ease-out), color var(--dur-micro) var(--ease-out), transform 160ms var(--ease-out);
+}
+.tick::before { content: counter(step); transition: opacity 120ms var(--ease-out), transform 160ms var(--ease-out); }
+.tick svg { position: absolute; width: 14px; height: 14px; opacity: 0; }
+.tick svg path { stroke-dasharray: 24; stroke-dashoffset: 24; transition: stroke-dashoffset 260ms var(--ease-out) 40ms; }
+.tick:active { transform: scale(0.9); }
+.tick[aria-pressed="true"] { background: var(--color-success); border-color: var(--color-success); color: var(--color-paper); }
+.tick[aria-pressed="true"]::before { opacity: 0; transform: scale(0.6); }
+.tick[aria-pressed="true"] svg { opacity: 1; }
+.tick[aria-pressed="true"] svg path { stroke-dashoffset: 0; }
+.steps--check li > span { transition: color var(--dur-short) var(--ease-out); }
+.steps--check li:has(.tick[aria-pressed="true"]) > span { color: var(--color-muted); }
+@media (hover: hover) and (pointer: fine) { .tick:hover { border-color: var(--color-success); color: var(--color-ink); } }
+.done-note { font-size: var(--text-sm); color: var(--color-ink-2); border-left: 2px solid var(--color-success); padding-left: var(--space-xs); }
+.done-note[hidden] { display: none; }
+
+/* App picker under a new key */
+.picker { display: flex; flex-wrap: wrap; gap: var(--space-2xs); }
+.pick {
+  display: inline-flex; align-items: center; gap: var(--space-2xs); min-height: 2.75rem; padding: 0 var(--space-sm);
+  border: 1px solid var(--color-rule-2); border-radius: var(--radius); background: var(--color-paper);
+  color: var(--color-ink); text-decoration: none; font-size: var(--text-sm); font-weight: 500; white-space: nowrap;
+  transition: border-color var(--dur-micro) var(--ease-out), background-color var(--dur-micro) var(--ease-out), transform 160ms var(--ease-out);
+}
+.pick span { color: var(--color-muted); transition: transform var(--dur-short) var(--ease-out), color var(--dur-micro) var(--ease-out); }
+.pick:active { transform: scale(0.97); }
+@media (hover: hover) and (pointer: fine) {
+  .pick:hover { border-color: var(--color-accent); background: var(--color-paper-2); }
+  .pick:hover span { transform: translateX(3px); color: var(--color-accent); }
+}
+
+/* Copy button: icon swaps copy -> check, blurred crossfade so it reads as one change. */
+.btn__icons { position: relative; width: 16px; height: 16px; flex: none; }
+.btn__icons svg { position: absolute; inset: 0; transition: opacity 180ms var(--ease-out), transform 180ms var(--ease-out), filter 180ms var(--ease-out); }
+.btn__icons .i-check { opacity: 0; transform: scale(0.6); filter: blur(2px); color: var(--color-success); }
+.btn--copy[data-state="success"] .btn__icons svg:first-child { opacity: 0; transform: scale(0.6); filter: blur(2px); }
+.btn--copy[data-state="success"] .btn__icons .i-check { opacity: 1; transform: none; filter: none; }
+
+/* The value that was just copied flashes once, so you see what went to the clipboard. */
+@keyframes copied { from { box-shadow: 0 0 0 3px color-mix(in oklch, var(--color-success) 35%, transparent); border-color: var(--color-success); } }
+.is-copied { animation: copied 700ms var(--ease-out); }
+
+/* New key: draws the eye once. */
+@keyframes key-in { from { opacity: 0; transform: translateY(6px); } }
+@keyframes key-ring { 0% { box-shadow: 0 0 0 0 color-mix(in oklch, var(--color-accent) 45%, transparent); } 100% { box-shadow: 0 0 0 10px transparent; } }
+@media (prefers-reduced-motion: no-preference) {
+  .key-reveal.is-in { animation: key-in 320ms var(--ease-out) both; }
+  .key-reveal.is-in .copy { animation: key-ring 900ms var(--ease-out) 250ms 2; }
+  .panel.is-entering { animation: key-in 220ms var(--ease-out) both; }
+  .done-note.is-in { animation: key-in 260ms var(--ease-out) both; }
+}
+/* Landing on a panel from the picker: a brief outline so you know where you are. */
+@keyframes landed { from { outline-color: var(--color-accent); } to { outline-color: transparent; } }
+.panel.is-landed { outline: 2px solid transparent; outline-offset: 8px; border-radius: var(--radius-card); animation: landed 1200ms var(--ease-out); }

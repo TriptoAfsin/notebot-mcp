@@ -23,8 +23,13 @@ function nextSteps() {
             <li><b>ChatGPT</b>: Settings → Security and login → Developer mode on, then chatgpt.com/plugins → + → Add custom MCP server, with OAuth.</li>
             <li><b>Claude Code, Cursor, others</b>: copy a snippet from the guide; your key is already filled in.</li>
           </ol>
+          <p class="label">Show me the steps for</p>
+          <div class="picker">
+            <a class="pick" href="#connect" data-pick="claude">Claude<span aria-hidden="true">→</span></a>
+            <a class="pick" href="#connect" data-pick="chatgpt">ChatGPT<span aria-hidden="true">→</span></a>
+            <a class="pick" href="#connect" data-pick="other">Something else<span aria-hidden="true">→</span></a>
+          </div>
           <p class="hint">Full guide: <a href="#connect">${esc(guide)}</a></p>
-          <a class="btn" href="#connect">Set up a client</a>
         </div>`;
 }
 
@@ -136,7 +141,7 @@ function clientTabs(butex: string, notebot: string): Tab[] {
   return [
     {
       id: "claude",
-      label: "Claude web & app",
+      label: "Claude",
       steps: [
         "Open claude.ai → Settings → Connectors → <b>Add custom connector</b>.",
         "Add one connector per server: copy the name and server URL from the cards. Leave the OAuth fields empty.",
@@ -183,7 +188,7 @@ function clientTabs(butex: string, notebot: string): Tab[] {
     },
     {
       id: "other",
-      label: "Any client",
+      label: "Other apps",
       steps: [
         "Streamable HTTP transport, stateless, JSON responses. One key works on both servers.",
         "Send the key as <code>Authorization: Bearer …</code> or <code>x-api-key</code>. Clients that only take a URL can put it in <code>?key=</code>.",
@@ -210,7 +215,13 @@ export function dashboardPage(d: DashboardData): Response {
   const panels = tabs
     .map(
       (t, i) => `<div class="panel" role="tabpanel" id="panel-${t.id}" aria-labelledby="tab-${t.id}"${i === 0 ? "" : " hidden"}>
-  <ol class="steps">${t.steps.map((s) => `<li>${s}</li>`).join("")}</ol>
+  <div class="guide" data-guide="${t.id}">
+    <div class="progress" aria-live="polite"><div class="progress__track"><i data-progress-bar></i></div><span data-progress-text>0 of ${t.steps.length} done</span></div>
+    <ol class="steps steps--check">${t.steps
+      .map((s, j) => `<li><button class="tick" type="button" aria-pressed="false" data-step="${j}" aria-label="Mark step ${j + 1} done">${ICON.check}</button><span>${s}</span></li>`)
+      .join("")}</ol>
+    <p class="done-note" data-done hidden>All set. Open a new chat and ask something like <q>Any new notice from BUTEX?</q> or <q>YM-I notes for Level 2</q>.</p>
+  </div>
   <div class="snippet-wrap">${t.cards ? pluginCards(t.id) : ""}${t.snippets.map(([label, body], j) => snippet(`snip-${t.id}-${j}`, label, body)).join("")}</div>
 </div>`,
     )
@@ -295,7 +306,8 @@ export function dashboardPage(d: DashboardData): Response {
   <section class="section" id="connect" aria-labelledby="connect-h">
     <div class="wrap">
       <div class="section__head"><h2 id="connect-h">Connect a client</h2><p>Add one or both servers. Claude and ChatGPT connect through a one-click OAuth sign-in; everything else uses your key. More detail in the <a href="https://github.com/TriptoAfsin/notebot-mcp/blob/main/docs/setup-guide.md">setup guide</a>.</p></div>
-      <div class="tabs" role="tablist" aria-label="Clients">${tabButtons}</div>
+      <p class="pick-hint">Pick the app you use. Tick each step as you go.</p>
+      <div class="tabs" role="tablist" aria-label="Clients">${tabButtons}<span class="tabs__ink" aria-hidden="true"></span></div>
       ${panels}
     </div>
   </section>

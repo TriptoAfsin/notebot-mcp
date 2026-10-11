@@ -23,13 +23,35 @@
 
   // Tabs (roving tabindex, arrow keys)
   const tabs = $$('[role="tab"]');
-  const select = (tab, focus) => {
+  const tablist = $(".tabs");
+  const reduced = matchMedia("(prefers-reduced-motion: reduce)");
+  // Sliding underline: one element moved with transform, so it shows where you came from.
+  const moveInk = () => {
+    const on = tabs.find((t) => t.getAttribute("aria-selected") === "true");
+    if (!on || !tablist) return;
+    tablist.style.setProperty("--ink-x", `${on.offsetLeft}px`);
+    tablist.style.setProperty("--ink-w", String(on.offsetWidth / 100));
+  };
+  const select = (tab, focus, animate = true) => {
+    const was = tabs.find((t) => t.getAttribute("aria-selected") === "true");
     tabs.forEach((t) => {
       const on = t === tab;
       t.setAttribute("aria-selected", String(on));
       t.tabIndex = on ? 0 : -1;
       $("#" + t.getAttribute("aria-controls")).hidden = !on;
     });
+    if (animate && was !== tab) {
+      const panel = $("#" + tab.getAttribute("aria-controls"));
+      panel.classList.remove("is-entering"); void panel.offsetWidth; panel.classList.add("is-entering");
+    }
+    moveInk();
+    // keep the chosen tab visible inside the strip on phones, without scrolling the page
+    if (tablist) {
+      const l = tab.offsetLeft, r = l + tab.offsetWidth;
+      if (l < tablist.scrollLeft || r > tablist.scrollLeft + tablist.clientWidth) {
+        tablist.scrollTo({ left: Math.max(0, l - 16), behavior: reduced.matches ? "auto" : "smooth" });
+      }
+    }
     if (focus) tab.focus();
     store.set("nb-tab", tab.id);
   };
@@ -41,7 +63,53 @@
     });
   });
   const saved = store.get("nb-tab");
-  if (saved && $("#" + saved)) select($("#" + saved));
+  if (saved && $("#" + saved)) select($("#" + saved), false, false);
+  if (tablist) {
+    tablist.classList.add("has-ink");
+    moveInk();
+    requestAnimationFrame(() => tablist.classList.add("ink-ready"));
+    addEventListener("resize", moveInk, { passive: true });
+    document.fonts?.ready.then(moveInk);
+  }
+
+  // Checklist: tick steps as you go; progress is remembered on this device.
+  $$("[data-guide]").forEach((guide) => {
+    const key = "nb-steps-" + guide.dataset.guide;
+    const ticks = $$(".tick", guide);
+    const bar = $("[data-progress-bar]", guide);
+    const text = $("[data-progress-text]", guide);
+    const done = $("[data-done]", guide);
+    let state = [];
+    try { state = JSON.parse(store.get(key) || "[]"); } catch {}
+    const render = (celebrate) => {
+      const n = ticks.filter((t, i) => { const on = !!state[i]; t.setAttribute("aria-pressed", String(on)); return on; }).length;
+      bar.style.setProperty("--p", String(n / ticks.length));
+      text.textContent = `${n} of ${ticks.length} done`;
+      const all = n === ticks.length;
+      if (all && done.hidden && celebrate) { done.classList.remove("is-in"); void done.offsetWidth; done.classList.add("is-in"); }
+      done.hidden = !all;
+    };
+    ticks.forEach((t, i) => t.addEventListener("click", () => {
+      state[i] = !state[i];
+      store.set(key, JSON.stringify(state));
+      render(true);
+    }));
+    render(false);
+  });
+
+  // "Show me the steps for…": jump to the right tab and mark where you landed.
+  document.addEventListener("click", (e) => {
+    const pick = e.target.closest("[data-pick]");
+    if (!pick) return;
+    const tab = $("#tab-" + pick.dataset.pick);
+    if (!tab) return;
+    e.preventDefault();
+    select(tab, false);
+    $("#connect").scrollIntoView({ behavior: reduced.matches ? "auto" : "smooth", block: "start" });
+    const panel = $("#" + tab.getAttribute("aria-controls"));
+    panel.classList.remove("is-landed"); void panel.offsetWidth; panel.classList.add("is-landed");
+    history.replaceState(null, "", "#connect");
+  });
 
   // Copy buttons — silent success: the label flips for a moment, no toast.
   document.addEventListener("click", async (e) => {
@@ -54,6 +122,8 @@
       await navigator.clipboard.writeText(src.textContent.trim());
       btn.dataset.state = "success";
       if (label) label.textContent = "Copied";
+      const box = src.closest(".copy") || src;
+      box.classList.remove("is-copied"); void box.offsetWidth; box.classList.add("is-copied");
     } catch {
       const r = document.createRange(); r.selectNodeContents(src);
       const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r);
@@ -112,11 +182,14 @@
         // existing address: the key goes to the inbox, never to the screen
         $("[data-key-emailed-text]").textContent = res.message;
         $("[data-key-emailed]").hidden = false;
+        $("[data-key-emailed]").classList.add("is-in");
         return;
       }
       const key = res.key;
       $("#new-key").textContent = key;
-      $("[data-key-reveal]").hidden = false;
+      const reveal = $("[data-key-reveal]");
+      reveal.hidden = false;
+      reveal.classList.add("is-in");
       fillKey(key);
       try { sessionStorage.setItem("nb-key", key); } catch {}
       $("#mkey").value = key;
