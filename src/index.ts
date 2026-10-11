@@ -19,7 +19,7 @@ import { VERSION } from "./version";
 import { agentSetup, dashboardPage, messagePage, type ToolDoc } from "./web/dashboard";
 
 const PUBLIC_DIR = join(import.meta.dir, "..", "public");
-const STATIC = new Set(["/app.css", "/app.js", "/icon.png", "/favicon.ico", "/apple-touch-icon.png"]);
+const STATIC = new Set(["/mcp-icon-butex.png", "/mcp-icon-notebot.png", "/app.css", "/app.js", "/icon.png", "/favicon.ico", "/apple-touch-icon.png"]);
 
 const CORS = {
   "access-control-allow-origin": "*",

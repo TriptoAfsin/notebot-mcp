@@ -105,7 +105,30 @@ function useCasesSection() {
   </section>`;
 }
 
-type Tab = { id: string; label: string; steps: string[]; snippets: [string, string][] };
+type Tab = { id: string; label: string; steps: string[]; snippets: [string, string][]; cards?: boolean };
+
+/** What to type into a client's "add custom MCP server / connector" form, per server. */
+const PLUGIN_INFO = [
+  { id: "butex", name: "BUTEX MCP", description: "BUTEX notices, results, routines, departments and teachers from butex.edu.bd", icon: "/mcp-icon-butex.png" },
+  { id: "notebot", name: "NoteBot knowledge base", description: "BUTEX notes, books, lab reports, question banks and study plans from NoteBot", icon: "/mcp-icon-notebot.png" },
+];
+
+function copyField(id: string, label: string, value: string) {
+  return `<div class="pfield"><span class="label">${esc(label)}</span><div class="copy"><code id="${id}">${esc(value)}</code>${copyBtn(`#${id}`)}</div></div>`;
+}
+
+function pluginCards(tab: string) {
+  return PLUGIN_INFO.map(
+    (p) => `<div class="pcard">
+    <div class="pcard__head"><img src="${p.icon}" width="48" height="48" alt="">
+      <b>${esc(p.name)}</b>
+      <a class="btn btn--sm" href="${p.icon}" download="${p.id}-mcp-icon.png">${ICON.download}<span class="btn__label">Icon PNG</span></a></div>
+    ${copyField(`pf-${tab}-${p.id}-name`, "Name", p.name)}
+    ${copyField(`pf-${tab}-${p.id}-desc`, "Description", p.description)}
+    ${copyField(`pf-${tab}-${p.id}-url`, "Server URL", `${env.publicUrl}/${p.id}/mcp`)}
+  </div>`,
+  ).join("");
+}
 
 function clientTabs(butex: string, notebot: string): Tab[] {
   const k = "YOUR_KEY";
@@ -116,22 +139,24 @@ function clientTabs(butex: string, notebot: string): Tab[] {
       label: "Claude web & app",
       steps: [
         "Open claude.ai → Settings → Connectors → <b>Add custom connector</b>.",
-        "Add one connector per server: name it <b>BUTEX MCP</b> or <b>NoteBot knowledge base</b>, and paste its URL below. Leave the OAuth fields empty.",
+        "Add one connector per server: copy the name and server URL from the cards. Leave the OAuth fields empty.",
         "Click <b>Connect</b>. A NoteBot page opens; enter your email to approve.",
         "Connectors you add on the web also show up in the Claude desktop and mobile apps. Turn them on per chat from the tools menu.",
       ],
-      snippets: [["BUTEX MCP URL", butex], ["NoteBot knowledge base URL", notebot]],
+      snippets: [],
+      cards: true,
     },
     {
       id: "chatgpt",
       label: "ChatGPT",
       steps: [
         "On chatgpt.com, open Settings → <b>Security and login</b> and turn on <b>Developer mode</b>. Needs Plus, Pro, Business, Enterprise or Edu; on a workspace, an admin may have to allow it.",
-        "Go to <b>chatgpt.com/plugins</b>, press <b>+</b>, then <b>Add custom MCP server</b>. Add one per server, with the URLs below.",
-        "Give it a name, paste the URL under <b>Connection</b>, set Authentication to <b>OAuth</b>, accept the warning, then <b>Create as a plugin</b>. Approve with your email on the NoteBot page.",
+        "Go to <b>chatgpt.com/plugins</b>, press <b>+</b>, then <b>Add custom MCP server</b>. Add one per server.",
+        "Fill the form from the cards: icon (download it), name, description, and the server URL under <b>Connection → Server URL</b>. Set Authentication to <b>OAuth</b>, accept the warning, then <b>Create as a plugin</b>. Approve with your email on the NoteBot page.",
         "In a new chat, type <b>@</b> and pick it. Menus moved in 2026 (the old Apps &amp; Connectors page is now Plugins); if yours differs, look for Plugins or Connectors.",
       ],
-      snippets: [["BUTEX MCP URL", butex], ["NoteBot knowledge base URL", notebot]],
+      snippets: [],
+      cards: true,
     },
     {
       id: "code",
@@ -186,7 +211,7 @@ export function dashboardPage(d: DashboardData): Response {
     .map(
       (t, i) => `<div class="panel" role="tabpanel" id="panel-${t.id}" aria-labelledby="tab-${t.id}"${i === 0 ? "" : " hidden"}>
   <ol class="steps">${t.steps.map((s) => `<li>${s}</li>`).join("")}</ol>
-  <div class="snippet-wrap">${t.snippets.map(([label, body], j) => snippet(`snip-${t.id}-${j}`, label, body)).join("")}</div>
+  <div class="snippet-wrap">${t.cards ? pluginCards(t.id) : ""}${t.snippets.map(([label, body], j) => snippet(`snip-${t.id}-${j}`, label, body)).join("")}</div>
 </div>`,
     )
     .join("");

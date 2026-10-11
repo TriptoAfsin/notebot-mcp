@@ -31,9 +31,9 @@ Custom MCP servers need a paid plan (Plus, Pro, Business, Enterprise or Edu). On
 
 1. On **chatgpt.com**, open **Settings → Security and login** and turn on **Developer mode**.
 2. Go to **chatgpt.com/plugins**, press **+**, then **Add custom MCP server**.
-3. Name: `BUTEX MCP`. Under **Connection**, paste `https://ai.butexnotebot.com/butex/mcp`. Authentication: **OAuth**. Accept the risk warning, then **Create as a plugin**.
+3. Icon: download it from https://ai.butexnotebot.com/mcp-icon-butex.png (NoteBot: `/mcp-icon-notebot.png`). Name: `BUTEX MCP`. Description: `BUTEX notices, results, routines, departments and teachers from butex.edu.bd`. Under **Connection → Server URL**, paste `https://ai.butexnotebot.com/butex/mcp`. Authentication: **OAuth**. Accept the risk warning, then **Create as a plugin**. The connect section on the dashboard has copy buttons for all of these.
 4. Approve with your email on the NoteBot page that opens.
-5. Repeat for `NoteBot knowledge base` with `https://ai.butexnotebot.com/notebot/mcp`.
+5. Repeat for `NoteBot knowledge base` with `https://ai.butexnotebot.com/notebot/mcp` (description: `BUTEX notes, books, lab reports, question banks and study plans from NoteBot`).
 6. In a new chat, type **@** and pick the plugin.
 
 ChatGPT renamed these menus in 2026: the old **Apps & Connectors** page is now **Plugins**, and Developer mode moved to **Security and login**. If your menus look different, search Settings for "Developer mode" and look for Plugins or Connectors.
