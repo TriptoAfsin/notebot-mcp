@@ -9,7 +9,7 @@ MCP servers for the BUTEX NoteBot family, served from **https://ai.butexnotebot.
 | `/analytics/mcp` | owner only (admin key) | NoteBot usage analytics via notebot-analytics-go |
 | `/` | humans | dashboard: get a free key with an email (a repeat email gets its key *emailed*, never shown), copy client configs, install the skill, check or revoke a key |
 
-Works in **Claude** (web, desktop, mobile: custom connector over OAuth), **ChatGPT** (web and app: developer-mode connector over OAuth, plus the `search`/`fetch` pair), **Claude Code**, **Cursor**, **VS Code**, and any Streamable-HTTP client.
+Works in **Claude** (web, desktop, mobile: custom connector over OAuth), **ChatGPT** (web: developer-mode custom MCP plugin over OAuth, plus the `search`/`fetch` pair), **Claude Code**, **Cursor**, **VS Code**, and any Streamable-HTTP client.
 
 Built to keep working when things break: per-upstream circuit breakers, retries with backoff, stale-cache fallback, a warm offline archive for search, Redis falling back to memory, and HMAC-signed keys that validate even with Postgres down. Every tool returns a readable error instead of throwing.
 

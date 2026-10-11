@@ -25,14 +25,18 @@ Connectors added on the web appear automatically in the Claude **desktop** and *
 
 **Try:** "Any new L-3 T-2 exam routine at BUTEX?" · "Give me YM-I notes for Level 2" · "Make me a 10-day plan for my L2T1 finals."
 
-## 2. ChatGPT (chatgpt.com, desktop and mobile apps)
+## 2. ChatGPT (chatgpt.com)
 
-1. On **chatgpt.com**, open **Settings → Apps & Connectors → Advanced settings** and turn on **Developer mode**. (Menu names change from time to time; look for "Connectors" or "Apps".)
-2. Back in **Apps & Connectors**, choose **Create**.
-3. Name: `BUTEX MCP`. MCP server URL: `https://ai.butexnotebot.com/butex/mcp`. Authentication: **OAuth**. Tick that you trust the app, then **Create**.
+Custom MCP servers need a paid plan (Plus, Pro, Business, Enterprise or Edu). On a workspace, an admin may have to allow them.
+
+1. On **chatgpt.com**, open **Settings → Security and login** and turn on **Developer mode**.
+2. Go to **chatgpt.com/plugins**, press **+**, then **Add custom MCP server**.
+3. Name: `BUTEX MCP`. Under **Connection**, paste `https://ai.butexnotebot.com/butex/mcp`. Authentication: **OAuth**. Accept the risk warning, then **Create as a plugin**.
 4. Approve with your email on the NoteBot page that opens.
 5. Repeat for `NoteBot knowledge base` with `https://ai.butexnotebot.com/notebot/mcp`.
-6. In a chat, press **+** and pick the app. It syncs to the ChatGPT mobile and desktop apps.
+6. In a new chat, type **@** and pick the plugin.
+
+ChatGPT renamed these menus in 2026: the old **Apps & Connectors** page is now **Plugins**, and Developer mode moved to **Security and login**. If your menus look different, search Settings for "Developer mode" and look for Plugins or Connectors.
 
 ## 3. Get a key (for Claude Code, Cursor, VS Code and others)
 

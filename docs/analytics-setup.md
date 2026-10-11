@@ -28,8 +28,8 @@ The sign-in page allows only a few wrong attempts per 15 minutes from one IP.
 
 ## 2. ChatGPT
 
-1. **Settings → Apps & Connectors → Advanced settings → Developer mode** on.
-2. **Create**: name `NoteBot analytics`, URL `https://ai.butexnotebot.com/analytics/mcp`, authentication **OAuth**.
+1. **Settings → Security and login → Developer mode** on.
+2. **chatgpt.com/plugins → + → Add custom MCP server**: name `NoteBot analytics`, Connection URL `https://ai.butexnotebot.com/analytics/mcp`, authentication **OAuth**, then **Create as a plugin**.
 3. Sign in on the NoteBot page with the admin key.
 
 ## 3. Claude Code

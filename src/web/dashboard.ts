@@ -20,7 +20,7 @@ function nextSteps() {
           <p class="label">Next: connect it</p>
           <ol class="steps">
             <li><b>Claude</b>: Settings → Connectors → Add custom connector, paste an endpoint, then Connect.</li>
-            <li><b>ChatGPT</b>: Settings → Apps &amp; Connectors → Developer mode → Create, with OAuth.</li>
+            <li><b>ChatGPT</b>: Settings → Security and login → Developer mode on, then chatgpt.com/plugins → + → Add custom MCP server, with OAuth.</li>
             <li><b>Claude Code, Cursor, others</b>: copy a snippet from the guide; your key is already filled in.</li>
           </ol>
           <p class="hint">Full guide: <a href="#connect">${esc(guide)}</a></p>
@@ -124,12 +124,12 @@ function clientTabs(butex: string, notebot: string): Tab[] {
     },
     {
       id: "chatgpt",
-      label: "ChatGPT web & app",
+      label: "ChatGPT",
       steps: [
-        "Open chatgpt.com → Settings → <b>Apps &amp; Connectors</b> → Advanced settings, and turn on <b>Developer mode</b>.",
-        "Back in Apps &amp; Connectors, choose <b>Create</b>. Add one app per server, with the URLs below.",
-        "Set Authentication to <b>OAuth</b>, tick that you trust the app, then create it. Approve with your email on the NoteBot page.",
-        "Pick them from the <b>+</b> menu in a chat. They sync to the ChatGPT mobile and desktop apps.",
+        "On chatgpt.com, open Settings → <b>Security and login</b> and turn on <b>Developer mode</b>. Needs Plus, Pro, Business, Enterprise or Edu; on a workspace, an admin may have to allow it.",
+        "Go to <b>chatgpt.com/plugins</b>, press <b>+</b>, then <b>Add custom MCP server</b>. Add one per server, with the URLs below.",
+        "Give it a name, paste the URL under <b>Connection</b>, set Authentication to <b>OAuth</b>, accept the warning, then <b>Create as a plugin</b>. Approve with your email on the NoteBot page.",
+        "In a new chat, type <b>@</b> and pick it. Menus moved in 2026 (the old Apps &amp; Connectors page is now Plugins); if yours differs, look for Plugins or Connectors.",
       ],
       snippets: [["BUTEX MCP URL", butex], ["NoteBot knowledge base URL", notebot]],
     },

@@ -46,7 +46,7 @@ Notes:
 - [ ] **Claude:** Settings → Connectors → Add custom connector →
   - `https://ai.butexnotebot.com/butex/mcp`
   - `https://ai.butexnotebot.com/notebot/mcp`
-- [ ] **ChatGPT:** Settings → Apps & Connectors → Developer mode → Create (OAuth), with the same two URLs.
+- [ ] **ChatGPT:** Settings → Security and login → Developer mode on, then chatgpt.com/plugins → + → Add custom MCP server (OAuth), with the same two URLs.
 - [ ] **Analytics (admin only):** follow [analytics-setup.md](analytics-setup.md) with your `ADMIN_API_KEY`.
 
 ## 5. Related services
