@@ -74,7 +74,7 @@
 
   // Checklist: tick steps as you go; progress is remembered on this device.
   $$("[data-guide]").forEach((guide) => {
-    const key = "nb-steps-" + guide.dataset.guide;
+    const key = "nb-steps-v2-" + guide.dataset.guide + "-" + $$(".tick", guide).length;
     const ticks = $$(".tick", guide);
     const bar = $("[data-progress-bar]", guide);
     const text = $("[data-progress-text]", guide);

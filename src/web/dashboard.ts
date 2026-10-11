@@ -1,6 +1,7 @@
 import { env } from "../env";
 import { ASSET_VERSION, VERSION } from "../version";
 import { brand, copyBtn, esc, head, ICON } from "./pages";
+import { mockAddServer, mockChat, mockConnect, mockConsent, mockDeveloperMode, mockForm } from "./mockups";
 
 export type ToolDoc = { name: string; title: string; description: string };
 export type ServerDoc = { id: string; name: string; tools: ToolDoc[]; guidelines: string };
@@ -110,7 +111,8 @@ function useCasesSection() {
   </section>`;
 }
 
-type Tab = { id: string; label: string; steps: string[]; snippets: [string, string][]; cards?: boolean; help?: { title: string; items: string[] } };
+type Step = string | { text: string; mock?: string };
+type Tab = { id: string; label: string; steps: Step[]; snippets: [string, string][]; cards?: boolean; help?: { title: string; items: string[] } };
 
 /** What to type into a client's "add custom MCP server / connector" form, per server. */
 const PLUGIN_INFO = [
@@ -159,10 +161,12 @@ function clientTabs(butex: string, notebot: string): Tab[] {
       id: "chatgpt",
       label: "ChatGPT",
       steps: [
-        "On chatgpt.com, open Settings → <b>Security and login</b> and turn on <b>Developer mode</b>. Needs Plus, Pro, Business, Enterprise or Edu; on a workspace, an admin may have to allow it.",
-        "Go to <b>chatgpt.com/plugins</b>, press <b>+</b>, then <b>Add custom MCP server</b>. Add one per server.",
-        "Fill the form from the cards: icon (download it), name, description, and the server URL under <b>Connection → Server URL</b>. Set Authentication to <b>OAuth</b>, accept the warning, then <b>Create as a plugin</b>. Approve with your email on the NoteBot page.",
-        "In a new chat, type <b>@</b> and pick it. Menus moved in 2026 (the old Apps &amp; Connectors page is now Plugins); if yours differs, look for Plugins or Connectors.",
+        { text: "On chatgpt.com, open Settings → <b>Security and login</b> and turn on <b>Developer mode</b>. Needs Plus, Pro, Business, Enterprise or Edu; on a workspace, an admin may have to allow it.", mock: mockDeveloperMode() },
+        { text: "Go to <b>chatgpt.com/plugins</b>, press <b>+</b>, then <b>Add custom MCP server</b>. You'll add one per server, so do this twice.", mock: mockAddServer() },
+        { text: "Fill the form from the cards on this page: icon (<b>Icon PNG</b>), name, description, and the server URL under <b>Connection → Server URL</b>. Keep Authentication on <b>OAuth</b>, accept the warning, then <b>Create as a plugin</b>.", mock: mockForm(butex) },
+        { text: "ChatGPT shows <b>Connect BUTEX MCP</b> (it uses the name you typed) with three notes about permissions. That's ChatGPT's standard notice for every plugin. Press <b>Continue to BUTEX MCP</b>.", mock: mockConnect() },
+        { text: "A NoteBot page opens. Enter your email and press <b>Allow</b>. That creates your free key and sends you back to ChatGPT. Access is read-only, and you can revoke it any time.", mock: mockConsent() },
+        { text: "Start a <b>new chat</b>, type <b>@</b> and pick the plugin, then ask. Menus moved in 2026; if yours differ, look for Plugins or Connectors.", mock: mockChat() },
       ],
       snippets: [],
       cards: true,
@@ -232,7 +236,10 @@ export function dashboardPage(d: DashboardData): Response {
   <div class="guide" data-guide="${t.id}">
     <div class="progress" aria-live="polite"><div class="progress__track"><i data-progress-bar></i></div><span data-progress-text>0 of ${t.steps.length} done</span></div>
     <ol class="steps steps--check">${t.steps
-      .map((s, j) => `<li><button class="tick" type="button" aria-pressed="false" data-step="${j}" aria-label="Mark step ${j + 1} done">${ICON.check}</button><span>${s}</span></li>`)
+      .map((s, j) => {
+        const { text, mock } = typeof s === "string" ? { text: s, mock: "" } : s;
+        return `<li><button class="tick" type="button" aria-pressed="false" data-step="${j}" aria-label="Mark step ${j + 1} done">${ICON.check}</button><div class="step__body">${text}${mock ?? ""}</div></li>`;
+      })
       .join("")}</ol>
     ${t.help ? `<details class="help"><summary>${esc(t.help.title)}</summary><ol>${t.help.items.map((x) => `<li>${x}</li>`).join("")}</ol></details>` : ""}
     <p class="done-note" data-done hidden>All set. Open a new chat and ask something like <q>Any new notice from BUTEX?</q> or <q>YM-I notes for Level 2</q>.</p>

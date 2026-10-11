@@ -417,8 +417,8 @@ pre.snippet {
 .tick[aria-pressed="true"]::before { opacity: 0; transform: scale(0.6); }
 .tick[aria-pressed="true"] svg { opacity: 1; }
 .tick[aria-pressed="true"] svg path { stroke-dashoffset: 0; }
-.steps--check li > span { transition: color var(--dur-short) var(--ease-out); }
-.steps--check li:has(.tick[aria-pressed="true"]) > span { color: var(--color-muted); }
+.steps--check li > .step__body { transition: color var(--dur-short) var(--ease-out); }
+.steps--check li:has(.tick[aria-pressed="true"]) > .step__body { color: var(--color-muted); }
 @media (hover: hover) and (pointer: fine) { .tick:hover { border-color: var(--color-success); color: var(--color-ink); } }
 .done-note { font-size: var(--text-sm); color: var(--color-ink-2); border-left: 2px solid var(--color-success); padding-left: var(--space-xs); }
 .done-note[hidden] { display: none; }
@@ -468,3 +468,65 @@ pre.snippet {
 .help summary::before { content: "+"; font-family: var(--font-mono); color: var(--color-muted); width: 1ch; transition: transform var(--dur-short) var(--ease-out); }
 .help[open] summary::before { transform: rotate(45deg); }
 .help ol { margin: var(--space-xs) 0 0; padding-left: 1.25rem; display: grid; gap: var(--space-2xs); color: var(--color-ink-2); }
+
+/* ---------- Step mockups: schematic, not a copy of anyone's UI ---------- */
+.mk { margin: var(--space-xs) 0 0; max-width: 24rem; display: grid; gap: var(--space-3xs); }
+.mk figcaption { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-muted); }
+.mk__screen {
+  display: flex; min-width: 0; border: 1px solid var(--color-rule-2); border-radius: var(--radius-card);
+  background: var(--color-paper-2); font-size: 12px; line-height: 1.35; color: var(--color-ink-2); overflow: hidden;
+}
+.mk b { color: var(--color-ink); font-weight: 600; }
+.mk small, .mk .is-muted { color: var(--color-muted); font-size: 11px; }
+.mk-side { display: grid; align-content: start; gap: 2px; padding: 8px 6px; border-right: 1px solid var(--color-rule); min-width: 7.5rem; }
+.mk-side span { padding: 4px 8px; border-radius: 6px; white-space: nowrap; }
+.mk-side .is-on { background: var(--color-paper-3); color: var(--color-ink); }
+.mk-main { flex: 1; min-width: 0; padding: 10px 12px; display: grid; gap: 6px; align-content: start; }
+.mk-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 10px; border: 1px solid var(--color-rule); border-radius: 8px; background: var(--color-paper); }
+.mk-row div { display: grid; }
+.mk-toggle { width: 28px; height: 16px; border-radius: 999px; background: var(--color-rule-2); position: relative; flex: none; }
+.mk-toggle::after { content: ""; position: absolute; top: 2px; left: 2px; width: 12px; height: 12px; border-radius: 50%; background: var(--color-paper); }
+.mk-toggle.is-on { background: var(--color-success); }
+.mk-toggle.is-on::after { left: 14px; }
+.mk-bar { display: flex; align-items: center; justify-content: space-between; }
+.mk-plus { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 6px; border: 1px solid var(--color-rule-2); background: var(--color-paper); color: var(--color-ink); font-weight: 600; }
+.mk-menu { justify-self: end; display: grid; gap: 2px; padding: 4px; border: 1px solid var(--color-rule-2); border-radius: 8px; background: var(--color-paper); }
+.mk-menu span { padding: 4px 8px; border-radius: 6px; white-space: nowrap; }
+.mk-menu .is-on { background: var(--color-accent); color: var(--color-accent-ink); }
+.mk-form label { font-size: 11px; color: var(--color-ink); margin-top: 2px; }
+.mk-input { padding: 5px 8px; border: 1px solid var(--color-rule-2); border-radius: 6px; background: var(--color-paper); color: var(--color-ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-family: var(--font-mono); font-size: 11px; }
+.mk-input.is-muted { color: var(--color-muted); }
+.mk-icon-slot { display: grid; place-items: center; width: 26px; height: 26px; border: 1px dashed var(--color-rule-2); border-radius: 6px; color: var(--color-muted); }
+.mk-seg-row { display: flex; align-items: center; justify-content: space-between; }
+.mk-seg { display: inline-flex; padding: 2px; border-radius: 999px; background: var(--color-paper-3); font-size: 10px; }
+.mk-seg i { font-style: normal; padding: 2px 8px; border-radius: 999px; }
+.mk-seg .is-on { background: var(--color-paper); color: var(--color-ink); }
+.mk-btn { justify-self: start; padding: 5px 12px; border-radius: 999px; background: var(--color-ink); color: var(--color-paper); font-weight: 500; white-space: nowrap; }
+.mk-btn.is-primary { background: var(--color-accent); color: var(--color-accent-ink); border-radius: 6px; }
+.mk-btn.is-ghost { background: transparent; color: var(--color-ink); border: 1px solid var(--color-rule-2); border-radius: 6px; }
+.mk-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.mk-btns .mk-btn { justify-self: stretch; text-align: center; }
+.mk-center { justify-items: center; text-align: center; }
+.mk-center .mk-btn { justify-self: stretch; }
+.mk-pair { display: flex; align-items: center; gap: 4px; }
+.mk-pair i { width: 4px; height: 4px; border-radius: 50%; background: var(--color-muted); }
+.mk-app { width: 22px; height: 22px; border-radius: 6px; background: var(--color-ink); }
+.mk-app.is-bx { background: var(--color-paper) url("/mcp-icon-butex.png") center / cover; border: 1px solid var(--color-rule-2); }
+.mk-list { justify-self: stretch; display: grid; border: 1px solid var(--color-rule); border-radius: 8px; text-align: left; }
+.mk-list span { padding: 5px 8px; }
+.mk-list span + span { border-top: 1px solid var(--color-rule); }
+.mk-brand { display: flex; align-items: center; gap: 6px; }
+.mk-chat { gap: 8px; }
+.mk-bubble { justify-self: end; padding: 5px 10px; border-radius: 999px; background: var(--color-paper-3); color: var(--color-ink); }
+.mk-composer { display: flex; align-items: center; gap: 6px; padding: 6px 8px; border: 1px solid var(--color-rule-2); border-radius: 999px; background: var(--color-paper); }
+.mk-chip { padding: 2px 8px; border-radius: 999px; background: var(--color-accent); color: var(--color-accent-ink); white-space: nowrap; font-size: 11px; }
+
+/* "Click here": a ring that breathes, so the eye lands on the right control. */
+.mk-hit { position: relative; box-shadow: 0 0 0 2px var(--color-accent); }
+@media (prefers-reduced-motion: no-preference) {
+  .mk-hit { animation: mk-hit 2.4s var(--ease-in-out) infinite; }
+  @keyframes mk-hit { 0%, 100% { box-shadow: 0 0 0 2px var(--color-accent); } 50% { box-shadow: 0 0 0 5px color-mix(in oklch, var(--color-accent) 25%, transparent), 0 0 0 2px var(--color-accent); } }
+}
+/* A finished step's picture steps back with its text. */
+.steps--check li:has(.tick[aria-pressed="true"]) .mk { opacity: 0.55; transition: opacity var(--dur-short) var(--ease-out); }
+@media (max-width: 30rem) { .mk-side { display: none; } }
