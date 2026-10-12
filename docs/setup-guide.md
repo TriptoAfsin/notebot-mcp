@@ -13,6 +13,8 @@ Add one or both. **One free key works on both.** Not sure what to ask? See [use-
 
 ## 1. Claude (claude.ai, desktop app, mobile app)
 
+Video walkthrough: [How to connect Claude](https://youtu.be/L4PLmMsy2KU) (YouTube).
+
 No key needed: Claude signs you in.
 
 1. On **claude.ai**, open **Settings → Connectors → Add custom connector**.
@@ -41,6 +43,8 @@ Custom MCP servers need a paid plan (Plus, Pro, Business, Enterprise or Edu). On
 ChatGPT renamed these menus in 2026: the old **Apps & Connectors** page is now **Plugins**, and Developer mode moved to **Security and login**. If your menus look different, search Settings for "Developer mode" and look for Plugins or Connectors.
 
 ## 2b. Gemini (gemini.google.com)
+
+Video walkthrough: [How to connect Gemini](https://youtu.be/IHIyGGy-1jI) (YouTube).
 
 Custom apps need a personal Google account (not work or school), age 18+, English, and Keep Activity on. Google is rolling it out starting in the US.
 

@@ -130,6 +130,7 @@ function tabsFor(s: ServerMeta): Tab[] {
       ],
       snippets: [],
       card: true,
+      video: { url: "https://youtu.be/L4PLmMsy2KU", title: "Watch how to connect Claude" },
     },
     {
       id: "chatgpt",
@@ -213,6 +214,7 @@ function EXTRA_TABS(s: ServerMeta, url: string, k: string): Tab[] {
       ],
       snippets: [],
       card: true,
+      video: { url: "https://youtu.be/IHIyGGy-1jI", title: "Watch how to connect Gemini" },
       help: {
         title: "Gemini doesn't show Custom apps?",
         items: [
