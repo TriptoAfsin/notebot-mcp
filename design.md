@@ -17,8 +17,8 @@ Read that file first. Everything there applies here unless amended below.
 
 ## Amendments for this app
 
-- **Routes, not one long page.** `/` home (Split Studio: hero → two server cards side by side →
-  four-fact row → live board), `/connect/<butex|notebot>` (the setup guide as a page), `/ask`,
+- **Routes, not one long page.** `/` home (Split Studio: hero with two numbered start steps →
+  two server cards side by side → four icon KPI cards → live board), `/connect/<butex|notebot>` (the setup guide as a page), `/ask`,
   `/tools`, `/agent`, `/key`. Old `/#section` anchors redirect client-side.
 - **Setup sheet.** On home, "Set up" opens the server's guide in a `<dialog>` (bottom sheet on
   phones, centred panel on desktop), deep-linkable as `/?setup=<server>`, Back closes it.
@@ -32,7 +32,10 @@ Read that file first. Everything there applies here unless amended below.
   entrance per route. Attention pulses run three times, never forever.
 - **Footer:** Ft2 inline single line.
 - **Consent page:** one centred card, at most 26 rem wide, on paper. Same tokens.
-- **Icons:** Lucide only (inline SVG, 1.5 stroke). There is no dimensional set here.
+- **Icons:** Lucide for functional UI (inline SVG, 1.5 stroke). The KPI cards use web-v2's
+  dimensional glyphs, pre-rendered into `src/web/glyphs.ts` and lit by the same `--g-*` tokens.
+  Regenerate them from the web-v2 source; never hand-edit.
+- **Cards** use web-v2's 10 px card radius, `--color-paper-2` fill and hairline border.
 - **Copy:** says what happens next ("Create key", "Set up a client"). Success is silent: copy buttons flip to "Copied" for 1.6 s, with no toasts.
 - **Snippets** carry a `data-template` with `YOUR_KEY`, and JS fills in the session's key.
 

@@ -36,7 +36,7 @@ export const SERVERS: Record<ServerId, ServerMeta> = {
   },
   notebot: {
     id: "notebot",
-    name: "NoteBot",
+    name: "NoteBot MCP",
     short: "NoteBot",
     icon: "/mcp-icon-notebot.png",
     description: "BUTEX notes, books, lab reports, question banks and study plans from NoteBot",

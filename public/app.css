@@ -32,6 +32,16 @@
   --shadow-float: 0 1px 2px oklch(21% 0.02 252 / 0.06);
   --shadow-sheet: 0 30px 80px -30px oklch(21% 0.02 252 / 0.35);
   --color-scrim: oklch(21% 0.02 252 / 0.45);
+  /* 3D glyph surfaces, shared with notebot-web-v2's dimensional icon set.
+     Lightness and chroma live here; each glyph supplies its own --glyph-hue. */
+  --c-gloss: 100% 0 0;
+  --g-body-hi-l: 79%; --g-body-hi-c: 0.155; --g-body-l: 61%; --g-body-c: 0.195;
+  --g-light-hi-l: 90%; --g-light-hi-c: 0.095; --g-light-l: 76%; --g-light-c: 0.15;
+  --g-deep-hi-l: 60%; --g-deep-hi-c: 0.19; --g-deep-l: 45%; --g-deep-c: 0.175;
+  --g-dark-hi-l: 45%; --g-dark-hi-c: 0.155; --g-dark-l: 33%; --g-dark-c: 0.125;
+  --g-paper-hi-l: 99.5%; --g-paper-hi-c: 0.004; --g-paper-l: 95%; --g-paper-c: 0.016;
+  --g-paper-2-hi-l: 95%; --g-paper-2-hi-c: 0.016; --g-paper-2-l: 86%; --g-paper-2-c: 0.032;
+  --g-shadow: 24% 0.03 252; --g-shadow-alpha: 0.2;
 
   --font-display: "Satoshi", "Geist", system-ui, sans-serif;
   --font-body: "Geist", system-ui, -apple-system, "Segoe UI", sans-serif;
@@ -95,6 +105,11 @@
     --shadow-float: none;
     --shadow-sheet: 0 30px 80px -20px oklch(0% 0 0 / 0.7);
     --color-scrim: oklch(8% 0.01 252 / 0.7);
+    --g-body-hi-l: 83%; --g-body-hi-c: 0.14; --g-body-l: 67%; --g-body-c: 0.185;
+    --g-light-hi-l: 93%; --g-light-hi-c: 0.08; --g-light-l: 81%; --g-light-c: 0.135;
+    --g-deep-hi-l: 66%; --g-deep-hi-c: 0.185; --g-deep-l: 51%; --g-deep-c: 0.175;
+    --g-dark-hi-l: 50%; --g-dark-hi-c: 0.155; --g-dark-l: 38%; --g-dark-c: 0.13;
+    --g-shadow: 0% 0 0; --g-shadow-alpha: 0.45;
   }
 }
 :root[data-theme="dark"] {
@@ -119,6 +134,11 @@
   --shadow-float: none;
   --shadow-sheet: 0 30px 80px -20px oklch(0% 0 0 / 0.7);
   --color-scrim: oklch(8% 0.01 252 / 0.7);
+  --g-body-hi-l: 83%; --g-body-hi-c: 0.14; --g-body-l: 67%; --g-body-c: 0.185;
+  --g-light-hi-l: 93%; --g-light-hi-c: 0.08; --g-light-l: 81%; --g-light-c: 0.135;
+  --g-deep-hi-l: 66%; --g-deep-hi-c: 0.185; --g-deep-l: 51%; --g-deep-c: 0.175;
+  --g-dark-hi-l: 50%; --g-dark-hi-c: 0.155; --g-dark-l: 38%; --g-dark-c: 0.13;
+  --g-shadow: 0% 0 0; --g-shadow-alpha: 0.45;
 }
 
 @media (min-width: 48rem) {
@@ -606,7 +626,7 @@ pre.snippet {
 
 .srv {
   position: relative; display: grid; gap: var(--space-md); align-content: start; min-width: 0;
-  padding: var(--space-lg); border: 1px solid var(--color-rule); border-radius: calc(var(--radius-card) + 6px);
+  padding: var(--space-lg); border: 1px solid var(--color-rule); border-radius: var(--radius-card);
   background: var(--color-paper-2);
   transition: border-color var(--dur-short) var(--ease-out), transform 160ms var(--ease-out);
 }
@@ -636,9 +656,17 @@ pre.snippet {
 .facts-row { display: grid; gap: var(--space-md); margin-top: var(--space-2xl); }
 @media (min-width: 40rem) { .facts-row { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (min-width: 64rem) { .facts-row { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
-.facts-row > div { display: grid; gap: var(--space-3xs); padding-top: var(--space-sm); border-top: 1px solid var(--color-rule-2); }
-.facts-row b { color: var(--color-ink); font-family: var(--font-display); font-size: var(--text-lg); }
-.facts-row span { font-size: var(--text-sm); color: var(--color-ink-2); }
+.kpi {
+  display: grid; gap: var(--space-3xs); align-content: start; min-width: 0;
+  padding: var(--space-md); border: 1px solid var(--color-rule); border-radius: var(--radius-card);
+  background: var(--color-paper-2);
+  transition: border-color var(--dur-short) var(--ease-out), background-color var(--dur-short) var(--ease-out);
+}
+@media (hover: hover) and (pointer: fine) { .kpi:hover { border-color: var(--color-rule-2); background: var(--color-paper-3); } }
+.kpi__icon { display: block; width: 3.25rem; height: 3.25rem; margin: -0.25rem 0 var(--space-2xs) -0.25rem; }
+.kpi__icon svg { display: block; width: 100%; height: 100%; }
+.kpi b { color: var(--color-ink); font-family: var(--font-display); font-size: var(--text-lg); }
+.kpi__text { font-size: var(--text-sm); color: var(--color-ink-2); }
 
 .board-row { margin-top: var(--space-2xl); }
 .board-row__head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: var(--space-2xs); }

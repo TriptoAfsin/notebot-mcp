@@ -1,5 +1,6 @@
 import { env } from "../env";
 import { ASSET_VERSION, VERSION } from "../version";
+import { GLYPH, type GlyphId } from "./glyphs";
 import { guideHtml, keyForm, SERVERS, serverUrl, snippet, type ServerId } from "./guide";
 import { brand, copyBtn, esc, head, ICON } from "./pages";
 
@@ -57,7 +58,7 @@ function serverCard(d: DashboardData, id: ServerId, i: number) {
   return `<article class="srv rise" style="--i:${i + 1}" data-srv="${id}">
   <div class="srv__head">
     <img class="srv__icon" style="view-transition-name: icon-${id}" src="${s.icon}" width="56" height="56" alt="">
-    <div><h2 class="srv__name" style="view-transition-name: name-${id}">${esc(s.name)}</h2><p class="srv__meta">${toolCount(d, id)} read-only tools · ${esc(s.source)}</p></div>
+    <div><h2 class="srv__name" style="view-transition-name: name-${id}">${esc(s.name)}</h2><p class="srv__meta">${toolCount(d, id)} tools · ${esc(s.source)}</p></div>
   </div>
   <p class="srv__pitch">${esc(s.pitch)}</p>
   <ul class="srv__asks" aria-label="You could ask">${s.asks.map((a, j) => `<li style="--j:${j}">${esc(a)}</li>`).join("")}</ul>
@@ -68,13 +69,20 @@ function serverCard(d: DashboardData, id: ServerId, i: number) {
 </article>`;
 }
 
+const FACTS: { icon: GlyphId; title: string; text: string }[] = [
+  { icon: "jokes", title: "Free", text: "One email gets a key for both servers. Claude, ChatGPT and Gemini sign you in by themselves." },
+  { icon: "notes", title: "Safe", text: "Nothing can be changed on butex.edu.bd or in NoteBot. Revoke access any time." },
+  { icon: "labs", title: "Checkable", text: "Every answer links the official notice or the note it came from." },
+  { icon: "results", title: "Steady", text: "When a source is down it answers from cache and says so." },
+];
+
 export function dashboardPage(d: DashboardData): Response {
   const body = `<section class="wrap hero">
   <h1 class="hero__title rise">Ask your AI about BUTEX.</h1>
   <p class="hero__lede rise" style="--i:1">Two free MCP servers that plug into Claude, ChatGPT, Gemini and your code editor. Pick one, or set up both: one email covers them.</p>
   <ol class="hero__steps rise" style="--i:2" aria-label="How to start">
     <li><span class="hero__num" aria-hidden="true">1</span><div><b>Get your free key</b><span>Enter your email. One key works for both servers.</span></div><a class="btn btn--primary btn--sm" href="/key">Get your key<span class="btn__arrow" aria-hidden="true">→</span></a></li>
-    <li><span class="hero__num" aria-hidden="true">2</span><div><b>Set up a server</b><span>Pick BUTEX MCP or NoteBot below and follow the steps for your app.</span></div><a class="btn btn--quiet btn--sm" href="#choose">Pick a server<span class="btn__arrow" aria-hidden="true">↓</span></a></li>
+    <li><span class="hero__num" aria-hidden="true">2</span><div><b>Set up a server</b><span>Pick BUTEX MCP or NoteBot MCP below and follow the steps for your app.</span></div><a class="btn btn--quiet btn--sm" href="#choose">Pick a server<span class="btn__arrow" aria-hidden="true">↓</span></a></li>
   </ol>
 </section>
 
@@ -83,11 +91,8 @@ export function dashboardPage(d: DashboardData): Response {
   ${serverCard(d, "notebot", 2)}
 </section>
 
-<section class="wrap facts-row rise" style="--i:4" aria-label="How it behaves">
-  <div><b>Free</b><span>One email gets a key for both servers. Claude, ChatGPT and Gemini sign you in by themselves.</span></div>
-  <div><b>Read-only</b><span>Nothing can be changed on butex.edu.bd or in NoteBot. Revoke access any time.</span></div>
-  <div><b>Checkable</b><span>Every answer links the official notice or the note it came from.</span></div>
-  <div><b>Steady</b><span>When a source is down it answers from cache and says so.</span></div>
+<section class="wrap facts-row" aria-label="How it behaves">
+  ${FACTS.map((f, i) => `<div class="kpi rise" style="--i:${i + 4}"><span class="kpi__icon" aria-hidden="true">${GLYPH[f.icon]}</span><b>${f.title}</b><span class="kpi__text">${f.text}</span></div>`).join("")}
 </section>
 
 <section class="wrap board-row rise" style="--i:5" aria-labelledby="board-h">
@@ -126,7 +131,7 @@ export function connectPage(d: DashboardData, id: ServerId, app?: string): Respo
   <a class="back rise" href="/#choose">← Both servers</a>
   <div class="connect-head__id rise" style="--i:1">
     <img class="srv__icon" style="view-transition-name: icon-${id}" src="${s.icon}" width="56" height="56" alt="">
-    <div><h1 style="view-transition-name: name-${id}">Set up ${esc(s.name)}</h1><p class="srv__meta">${toolCount(d, id)} read-only tools · ${esc(s.source)}</p></div>
+    <div><h1 style="view-transition-name: name-${id}">Set up ${esc(s.name)}</h1><p class="srv__meta">${toolCount(d, id)} tools · ${esc(s.source)}</p></div>
   </div>
   <div class="copy connect-head__url rise" style="--i:2"><code id="url-${id}">${esc(serverUrl(id))}</code>${copyBtn(`#url-${id}`)}</div>
 </section>
@@ -174,7 +179,7 @@ export function askPage(): Response {
   <div class="seg rise" style="--i:1" role="group" aria-label="Show" data-filter>
     <button type="button" aria-pressed="true" data-filter-btn="all">Both</button>
     <button type="button" aria-pressed="false" data-filter-btn="butex">BUTEX MCP</button>
-    <button type="button" aria-pressed="false" data-filter-btn="notebot">NoteBot</button>
+    <button type="button" aria-pressed="false" data-filter-btn="notebot">NoteBot MCP</button>
   </div>
 </section>
 <div class="wrap ask-wrap">${group("butex", 0)}${group("notebot", 1)}</div>`;
