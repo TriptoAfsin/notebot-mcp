@@ -27,6 +27,8 @@ Connectors added on the web appear automatically in the Claude **desktop** and *
 
 ## 2. ChatGPT (chatgpt.com)
 
+Video walkthrough: [How to connect ChatGPT](https://youtu.be/f8MHF_e3yNo) (YouTube).
+
 Custom MCP servers need a paid plan (Plus, Pro, Business, Enterprise or Edu). On a workspace, an admin may have to allow them.
 
 1. On **chatgpt.com**, open **Settings → Security and login** and turn on **Developer mode**.

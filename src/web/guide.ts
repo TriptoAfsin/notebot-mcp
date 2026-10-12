@@ -58,7 +58,11 @@ type Tab = {
   snippets: [string, string][];
   card?: boolean;
   help?: { title: string; items: string[] };
+  /** A walkthrough video, shown above the steps. */
+  video?: { url: string; title: string };
 };
+
+const PLAY = `<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="m10 8 6 4-6 4z" fill="currentColor"/></svg>`;
 
 export function snippet(id: string, label: string, body: string) {
   return `<div class="snippet-wrap">
@@ -141,6 +145,7 @@ function tabsFor(s: ServerMeta): Tab[] {
       ],
       snippets: [],
       card: true,
+      video: { url: "https://youtu.be/f8MHF_e3yNo", title: "Watch how to connect ChatGPT" },
       help: {
         title: `ChatGPT says it can't find the ${s.name} tools?`,
         items: [
@@ -271,6 +276,7 @@ export function guideHtml(id: ServerId, scope: string, app = "claude"): string {
       ].join("");
       return `<div class="panel" role="tabpanel" id="panel-${pre}-${t.id}" aria-labelledby="tab-${pre}-${t.id}"${t.id === active ? "" : " hidden"}>
   <div class="guide" data-guide="${id}-${t.id}">
+    ${t.video ? `<a class="video-link" href="${t.video.url}" target="_blank" rel="noopener"><span class="video-link__icon">${PLAY}</span><span><b>${esc(t.video.title)}</b><span>Video guide on YouTube · opens in a new tab</span></span></a>` : ""}
     <div class="progress" aria-live="polite"><div class="progress__track"><i data-progress-bar></i></div><span data-progress-text>0 of ${t.steps.length} done</span></div>
     <ol class="steps steps--check">${steps}</ol>
     ${t.help ? `<details class="help"><summary>${esc(t.help.title)}</summary><ol>${t.help.items.map((x) => `<li>${x}</li>`).join("")}</ol></details>` : ""}
