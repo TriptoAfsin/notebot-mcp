@@ -59,10 +59,31 @@ type Tab = {
   card?: boolean;
   help?: { title: string; items: string[] };
   /** A walkthrough video, shown above the steps. */
-  video?: { url: string; title: string };
+  video?: Video;
 };
 
-const PLAY = `<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="m10 8 6 4-6 4z" fill="currentColor"/></svg>`;
+export type Video = { id: string; app: string; title: string };
+
+/** Setup walkthroughs on YouTube, one per chat app. */
+export const VIDEOS = {
+  claude: { id: "L4PLmMsy2KU", app: "Claude", title: "Watch how to connect Claude" },
+  chatgpt: { id: "f8MHF_e3yNo", app: "ChatGPT", title: "Watch how to connect ChatGPT" },
+  gemini: { id: "IHIyGGy-1jI", app: "Gemini", title: "Watch how to connect Gemini" },
+} satisfies Record<string, Video>;
+
+export const videoUrl = (v: Video) => `https://youtu.be/${v.id}`;
+// hqdefault exists for every video (maxres doesn't); CSS crops its letterbox bars to 16:9
+export const videoThumb = (v: Video) => `https://i.ytimg.com/vi/${v.id}/hqdefault.jpg`;
+
+/** A YouTube thumbnail with a play badge; the whole thing links out. */
+export function videoCard(v: Video, compact = false) {
+  return `<a class="vid${compact ? " vid--row" : ""}" href="${videoUrl(v)}" target="_blank" rel="noopener">
+  <span class="vid__thumb"><img src="${videoThumb(v)}" alt="" loading="lazy" decoding="async" width="480" height="270"><span class="vid__play" aria-hidden="true">${PLAY}</span></span>
+  <span class="vid__text"><b>${esc(v.title)}</b><span>Video guide on YouTube · opens in a new tab</span></span>
+</a>`;
+}
+
+const PLAY = `<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M8 5.5v13l11-6.5z" fill="currentColor"/></svg>`;
 
 export function snippet(id: string, label: string, body: string) {
   return `<div class="snippet-wrap">
@@ -130,7 +151,7 @@ function tabsFor(s: ServerMeta): Tab[] {
       ],
       snippets: [],
       card: true,
-      video: { url: "https://youtu.be/L4PLmMsy2KU", title: "Watch how to connect Claude" },
+      video: VIDEOS.claude,
     },
     {
       id: "chatgpt",
@@ -146,7 +167,7 @@ function tabsFor(s: ServerMeta): Tab[] {
       ],
       snippets: [],
       card: true,
-      video: { url: "https://youtu.be/f8MHF_e3yNo", title: "Watch how to connect ChatGPT" },
+      video: VIDEOS.chatgpt,
       help: {
         title: `ChatGPT says it can't find the ${s.name} tools?`,
         items: [
@@ -214,7 +235,7 @@ function EXTRA_TABS(s: ServerMeta, url: string, k: string): Tab[] {
       ],
       snippets: [],
       card: true,
-      video: { url: "https://youtu.be/IHIyGGy-1jI", title: "Watch how to connect Gemini" },
+      video: VIDEOS.gemini,
       help: {
         title: "Gemini doesn't show Custom apps?",
         items: [
@@ -278,7 +299,7 @@ export function guideHtml(id: ServerId, scope: string, app = "claude"): string {
       ].join("");
       return `<div class="panel" role="tabpanel" id="panel-${pre}-${t.id}" aria-labelledby="tab-${pre}-${t.id}"${t.id === active ? "" : " hidden"}>
   <div class="guide" data-guide="${id}-${t.id}">
-    ${t.video ? `<a class="video-link" href="${t.video.url}" target="_blank" rel="noopener"><span class="video-link__icon">${PLAY}</span><span><b>${esc(t.video.title)}</b><span>Video guide on YouTube · opens in a new tab</span></span></a>` : ""}
+    ${t.video ? videoCard(t.video, true) : ""}
     <div class="progress" aria-live="polite"><div class="progress__track"><i data-progress-bar></i></div><span data-progress-text>0 of ${t.steps.length} done</span></div>
     <ol class="steps steps--check">${steps}</ol>
     ${t.help ? `<details class="help"><summary>${esc(t.help.title)}</summary><ol>${t.help.items.map((x) => `<li>${x}</li>`).join("")}</ol></details>` : ""}

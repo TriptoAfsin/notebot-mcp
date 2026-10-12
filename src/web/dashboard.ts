@@ -1,7 +1,7 @@
 import { env } from "../env";
 import { ASSET_VERSION, VERSION } from "../version";
 import { GLYPH, type GlyphId } from "./glyphs";
-import { guideHtml, keyForm, SERVERS, serverUrl, snippet, type ServerId } from "./guide";
+import { guideHtml, keyForm, SERVERS, serverUrl, snippet, VIDEOS, videoCard, type ServerId } from "./guide";
 import { brand, copyBtn, esc, head, ICON } from "./pages";
 
 export type ToolDoc = { name: string; title: string; description: string };
@@ -98,6 +98,12 @@ export function dashboardPage(d: DashboardData): Response {
 <section class="wrap board-row rise" style="--i:5" aria-labelledby="board-h">
   <div class="board-row__head"><h2 id="board-h">Latest on the BUTEX board</h2><a href="/ask#butex">Ask about these →</a></div>
   <div class="board" data-board aria-live="polite"><div class="sk"></div><div class="sk"></div><div class="sk"></div></div>
+</section>
+
+<section class="wrap tutorials rise" style="--i:6" aria-labelledby="tut-h">
+  <div class="board-row__head"><h2 id="tut-h">Guided tutorials</h2></div>
+  <p class="tutorials__lede">Short videos that walk through connecting NoteBot MCP, one per app.</p>
+  <div class="tutorials__grid">${Object.values(VIDEOS).map((v) => videoCard(v)).join("")}</div>
 </section>`;
 
   // Both guides ride along as inert templates; the setup sheet clones the one you pick.

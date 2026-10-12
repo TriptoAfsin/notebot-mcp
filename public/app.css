@@ -777,16 +777,36 @@ body.has-sheet { overflow: hidden; }
 /* Honeypot: off-screen for people, filled in by naive bots. */
 .hp { position: absolute; left: -10000px; width: 1px; height: 1px; overflow: hidden; }
 
-/* Video walkthrough link above a guide's steps */
-.video-link {
-  display: flex; align-items: center; gap: var(--space-xs); margin-bottom: var(--space-sm); min-width: 0;
-  padding: var(--space-xs) var(--space-sm); border: 1px solid var(--color-rule); border-radius: var(--radius-card);
+/* YouTube walkthroughs: thumbnail card (home grid) and row (above a guide's steps) */
+.vid {
+  display: grid; gap: var(--space-xs); align-content: start; min-width: 0;
+  padding: var(--space-xs); border: 1px solid var(--color-rule); border-radius: var(--radius-card);
   background: var(--color-paper-2); color: var(--color-ink-2); text-decoration: none;
   transition: border-color var(--dur-short) var(--ease-out), background-color var(--dur-short) var(--ease-out);
 }
-.video-link:hover { border-color: var(--color-rule-2); background: var(--color-paper-3); }
-.video-link:active { transform: translateY(1px); }
-.video-link__icon { display: inline-grid; place-items: center; flex: none; width: 2.25rem; height: 2.25rem; border-radius: 999px; background: var(--color-accent-wash); color: var(--color-accent); }
-.video-link > span:last-child { display: grid; min-width: 0; }
-.video-link b { color: var(--color-ink); font-weight: 500; }
-.video-link > span:last-child > span { font-size: var(--text-sm); color: var(--color-muted); }
+@media (hover: hover) and (pointer: fine) {
+  .vid:hover { border-color: var(--color-rule-2); background: var(--color-paper-3); }
+  .vid:hover .vid__play { transform: scale(1.06); }
+}
+.vid:active { transform: translateY(1px); }
+.vid__thumb { position: relative; display: block; aspect-ratio: 16 / 9; overflow: hidden; border-radius: calc(var(--radius-card) - 4px); background: var(--color-paper-3); }
+.vid__thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.vid__play {
+  position: absolute; left: var(--space-xs); bottom: var(--space-xs);
+  display: grid; place-items: center; width: 2.75rem; height: 2.75rem; border-radius: 999px;
+  background: var(--color-accent); color: var(--color-accent-ink); box-shadow: var(--shadow-sheet);
+  transition: transform var(--dur-short) var(--ease-out);
+}
+.vid__text { display: grid; gap: 2px; min-width: 0; padding: 0 var(--space-3xs) var(--space-3xs); }
+.vid__text b { color: var(--color-ink); font-weight: 500; }
+.vid__text > span { font-size: var(--text-sm); color: var(--color-muted); }
+.vid--row { grid-template-columns: minmax(0, 9rem) minmax(0, 1fr); align-items: center; margin-bottom: var(--space-sm); }
+.vid--row .vid__text { padding: 0; }
+.vid--row .vid__play { width: 1.75rem; height: 1.75rem; left: var(--space-2xs); bottom: var(--space-2xs); }
+.vid--row .vid__play svg { width: 13px; height: 13px; }
+@media (max-width: 26rem) { .vid--row { grid-template-columns: minmax(0, 1fr); } }
+
+.tutorials { margin-top: var(--space-2xl); }
+.tutorials__lede { color: var(--color-ink-2); margin: var(--space-3xs) 0 var(--space-md); }
+.tutorials__grid { display: grid; gap: var(--space-md); }
+@media (min-width: 40rem) { .tutorials__grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
