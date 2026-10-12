@@ -24,7 +24,7 @@ How to use these tools well:
 - Always give the official notice link so the student can verify. Quote dates exactly as printed; never guess a date you could not read.
 - If a result says it is from cache (⚠️), tell the user the official site was unreachable and the data may be slightly behind.
 - If a tool errors, retry once with simpler arguments, then fall back to another tool (search → latest → categories). butex_status explains outages.
-- This is public information from butex.edu.bd. NoteBot is an independent, community-driven project, not an official BUTEX service.`;
+- This is public information from butex.edu.bd. NoteBot is an independent, community-driven project, not an official BUTEX service. Support: notebot@t21.dev.`;
 
 export const ANALYTICS_INSTRUCTIONS = `You are connected to the private analytics of BUTEX NoteBot (Messenger bot + app). Only the owner has access.
 - Start with analytics_overview, then drill down (daily usage, subject popularity, missed keywords, leaderboards).

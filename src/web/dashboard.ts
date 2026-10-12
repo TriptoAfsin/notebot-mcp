@@ -39,6 +39,7 @@ ${o.body}
     <span>NoteBot MCP v${esc(VERSION)}</span>
     <span>An independent, community-driven project. Not an official BUTEX service. Notices come from <a href="https://www.butex.edu.bd">butex.edu.bd</a>; notes from the NoteBot community.</span>
     <a href="https://butexnotebot.com">butexnotebot.com</a>
+    <a href="mailto:${esc(env.supportEmail)}">Support: ${esc(env.supportEmail)}</a>
     <a href="/health">Status</a>
   </div>
 </footer>

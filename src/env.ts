@@ -40,6 +40,8 @@ export const env = {
   resendKey: e.RESEND_API_KEY ?? "",
   mailFrom: e.MAIL_FROM ?? (e.RESEND_FROM_EMAIL ? `${e.RESEND_FROM_NAME ?? "NoteBot"} <${e.RESEND_FROM_EMAIL}>` : "NoteBot <notebot@t21.dev>"),
   mailReplyTo: e.MAIL_REPLY_TO ?? "",
+  /** Shown on the site, in emails and in the MCP instructions. */
+  supportEmail: e.SUPPORT_EMAIL ?? "notebot@t21.dev",
   recoveryEmailsPerHour: int("RECOVERY_EMAILS_PER_HOUR", 3),
   /** Caps on outgoing mail, so the key form can't be used to spam other people's inboxes. */
   emailsPerIpHour: int("EMAILS_PER_IP_HOUR", 5),

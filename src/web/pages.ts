@@ -79,7 +79,7 @@ export function authorizePage(v: AuthorizeView, status = 200): Response {
     <button class="btn btn--primary" type="submit" name="action" value="allow">Allow</button>
   </div>
 </form>
-<p class="fine">Read-only access. You can revoke the key any time from <a href="/key">ai.butexnotebot.com/key</a>. NoteBot is an independent, community-driven project, not an official BUTEX service.</p>`;
+<p class="fine">Read-only access. You can revoke the key any time from <a href="/key">ai.butexnotebot.com/key</a>. NoteBot is an independent, community-driven project, not an official BUTEX service. Help: <a href="mailto:${env.supportEmail}">${env.supportEmail}</a>.</p>`;
 
   const html = `${head(`Connect · NoteBot MCP`, "Authorize an app to use NoteBot MCP.")}
 <body>
