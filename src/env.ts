@@ -30,7 +30,7 @@ export const env = {
 
   analyticsUrl: (e.ANALYTICS_API_URL ?? "https://analytics-api.butexnotebot.com").replace(/\/+$/, ""),
   analyticsAdminKey: e.ANALYTICS_ADMIN_KEY ?? "",
-  /** Count public MCP tool calls as platform "ai" in NoteBot analytics (needs ANALYTICS_ADMIN_KEY). */
+  /** Count public MCP tool calls as platform "ai" in NoteBot analytics (written straight to Postgres; HTTP fallback needs ANALYTICS_ADMIN_KEY). */
   reportAiUsage: (e.REPORT_AI_USAGE ?? "true") !== "false",
 
   /** notebot-engine-v2: notes, labs, q-banks, routines, syllabus. */
