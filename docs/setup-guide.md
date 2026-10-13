@@ -117,7 +117,7 @@ The `butex-notebot` skill teaches your agent which tool to use for which questio
 | "Missing or invalid API key" | Check for spaces when pasting; request the key again with your email (it's emailed back). |
 | Connector says "Couldn't connect" | Remove it and add it again; make sure the URL ends in `/mcp`. |
 | Answer says "⚠️ cached copy" | The source (butex.edu.bd or NoteBot) was unreachable; the data may be a bit behind. |
-| "Rate limit" | Free keys allow 120 requests/minute and 20,000/day. |
+| "Rate limit" | Free keys allow 120 requests/minute and 10,000/day. |
 | Stopped working after you replaced your key | Paste the new key into each client. |
 
 NoteBot is an independent, community-driven project, not an official BUTEX service. Questions: email [notebot@t21.dev](mailto:notebot@t21.dev) or reply to any NoteBot email.
