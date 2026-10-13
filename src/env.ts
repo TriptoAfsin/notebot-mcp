@@ -50,7 +50,7 @@ export const env = {
   emailsGlobalHour: int("EMAILS_GLOBAL_HOUR", 200),
 
   freePerMinute: int("FREE_RATE_PER_MINUTE", 120),
-  freePerDay: int("FREE_RATE_PER_DAY", 10000),
+  freePerDay: int("FREE_RATE_PER_DAY", 5000),
   keysPerEmail: int("MAX_KEYS_PER_EMAIL", 10),
   keyIssuesPerIpHour: int("KEY_ISSUES_PER_IP_HOUR", 30),
 };
