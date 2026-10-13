@@ -53,6 +53,10 @@ export function json(data: unknown, init: ResponseInit = {}): Response {
 }
 
 export function clientIp(req: Request, server?: { requestIP(r: Request): { address: string } | null }): string {
+  // ai.butexnotebot.com sits behind Cloudflare: X-Forwarded-For's first hop is a
+  // Cloudflare edge (172.68.x, 162.158.x…), shared by everyone in the city, so
+  // per-IP limits were really per-edge. CF-Connecting-IP is the visitor.
+  const cf = req.headers.get("cf-connecting-ip")?.trim();
   const fwd = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim();
-  return fwd || req.headers.get("x-real-ip") || server?.requestIP(req)?.address || "unknown";
+  return cf || fwd || req.headers.get("x-real-ip") || server?.requestIP(req)?.address || "unknown";
 }

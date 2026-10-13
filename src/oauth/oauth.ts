@@ -236,9 +236,15 @@ export async function token(req: Request): Promise<Response> {
     const verifier = body.get("code_verifier") ?? "";
     if (!verifier || sha256b64url(verifier) !== code.c) return oauthError("invalid_grant", "PKCE verification failed.");
 
+    // A retried exchange (Gemini re-sends it when the first answer is slow) gets
+    // the same token instead of invalid_grant, which left the connector half-linked
+    // with a key that was never used. Safe: only the holder of the PKCE verifier
+    // for this client can exchange, and only until the code expires.
     const usedKey = `mcp:code:${sha256b64url(body.get("code")!)}`;
-    if (await cache.get<boolean>(usedKey)) return oauthError("invalid_grant", "Authorization code already used.");
+    const repeat = !!(await cache.get<boolean>(usedKey));
     await cache.set(usedKey, true, 600);
+    const clientName = verifyBlob<Client>(code.i, "oauth-client")?.n ?? "unknown";
+    log.info("oauth token issued", { event: "oauth", action: repeat ? "token-repeat" : "token", client: clientName, resource: code.s });
     return tokenResponse(code.k, code.s);
   }
 

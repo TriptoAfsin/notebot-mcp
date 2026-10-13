@@ -191,7 +191,9 @@ const tok = (verifierToUse: string) =>
 check("token rejects wrong PKCE verifier", (await tok("wrong-verifier-wrong-verifier-wrong")).status === 400);
 const tokenRes = await tok(verifier).then(j);
 check("token exchange", /^nbk_f_/.test(tokenRes.access_token ?? ""), `refresh=${!!tokenRes.refresh_token}`);
-check("code is single-use", (await tok(verifier)).status === 400);
+// a retried exchange (Gemini does this) gets the same token; PKCE still guards it
+const retried = await tok(verifier).then(j);
+check("retried code exchange returns the same token", retried.access_token === tokenRes.access_token);
 const viaOauth = await rpc("/butex/mcp", tokenRes.access_token, "tools/list");
 check("OAuth token works on MCP", viaOauth.status === 200);
 const refreshed = await fetch(asm.token_endpoint, { method: "POST", headers: { "content-type": "application/x-www-form-urlencoded" }, body: new URLSearchParams({ grant_type: "refresh_token", refresh_token: tokenRes.refresh_token }) }).then(j);
