@@ -49,10 +49,10 @@ export const env = {
   emailsPerAddressDay: int("EMAILS_PER_ADDRESS_DAY", 6),
   emailsGlobalHour: int("EMAILS_GLOBAL_HOUR", 200),
 
-  freePerMinute: int("FREE_RATE_PER_MINUTE", 60),
-  freePerDay: int("FREE_RATE_PER_DAY", 5000),
+  freePerMinute: int("FREE_RATE_PER_MINUTE", 120),
+  freePerDay: int("FREE_RATE_PER_DAY", 20000),
   keysPerEmail: int("MAX_KEYS_PER_EMAIL", 10),
-  keyIssuesPerIpHour: int("KEY_ISSUES_PER_IP_HOUR", 10),
+  keyIssuesPerIpHour: int("KEY_ISSUES_PER_IP_HOUR", 30),
 };
 
 if (env.isProd && env.usingDevSecret) {
