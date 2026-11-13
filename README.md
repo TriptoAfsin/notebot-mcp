@@ -62,3 +62,7 @@ Keys and tokens are never logged (only an 8-character key id), and emails are ma
 ## Skill
 
 `skill/butex-notebot/` is served at `/skill/*`, with `install.sh`, `install.ps1` and a zip for claude.ai. It self-updates from `/skill/version.json`. Bump the version comment in its `SKILL.md` to release.
+
+## Support NoteBot
+
+NoteBot has been free for every BUTEX student since 2018, and it stays that way. If it helped you through an exam, you can help keep it running on [Patreon](https://www.patreon.com/triptex). Support pays for the servers, the bots and app store fees.
